@@ -1,0 +1,43 @@
+﻿---
+import Layout from '../layouts/BlogPost.astro';
+import GoldenSpiral from '../components/GoldenSpiral.astro';
+import MeteorShower from '../components/MeteorShower.astro';
+import TerminalQuote from '../components/TerminalQuote.astro';
+
+const nowText =
+	'Now: 探索 AI Agent 的可能性，构建有用的工具。';
+---
+
+<Layout
+	title="About - YuanHao"
+	description="About YuanHao — 思考、工程、记录。"
+	pubDate={new Date('June 29 2026')}
+	metaMode="page"
+>
+	<Fragment slot="background">
+		<GoldenSpiral />
+		<MeteorShower density={1.8} heightVh={60} />
+	</Fragment>
+	<div class="mx-auto max-w-3xl">
+		<p>
+			Hi, I'm <strong>YuanHao</strong>. 这是我的个人空间，用来记录技术笔记、项目经验和想法。
+		</p>
+
+		<h2>Focus</h2>
+		<ul>
+			<li>AI Agent 与工程效率</li>
+			<li>自动化工作流与工具链</li>
+			<li>Web 开发与设计</li>
+		</ul>
+
+		<h2>Now</h2>
+		<div class="mx-auto max-w-2xl text-left">
+			<TerminalQuote text={nowText} once={true} fixedHeight={false} />
+		</div>
+
+		<h2>Contact</h2>
+		<p>
+			可以通过 <a href="https://github.com/YuanHaoXD" target="_blank" rel="noreferrer">GitHub</a> 联系我。
+		</p>
+	</div>
+</Layout>
