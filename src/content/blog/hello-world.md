@@ -10,7 +10,7 @@ draft: false
 
 这是这个网站的第一篇文章。
 
-基于 Astro + Tailwind CSS 构建，参考了 [Dan Arnoux](https://danarnoux.com) 的网站设计风格。
+基于 Astro + Tailwind CSS 构建。
 
 ### 为什么做这个网站？
 

@@ -1,6 +1,6 @@
 # SEO Verification Checklist
 
-## Local (Windows CMD)
+## Local
 
 1. Start dev server:
    - `npm run dev`
@@ -19,22 +19,12 @@
    - `sitemap-0.xml` (or equivalent split sitemap file)
    - `sitemap.xml` (copied from `sitemap-index.xml` by postbuild step)
 
-## Production (Cloudflare Pages)
+## Production (GitHub Pages)
 
-Use Windows CMD:
-
-- `curl -I https://danarnoux.com/sitemap-index.xml`
-- `curl -I https://danarnoux.com/sitemap-0.xml`
-- `curl -I https://danarnoux.com/sitemap.xml`
+- `curl -I https://yuanhaoxd.github.io/sitemap-index.xml`
+- `curl -I https://yuanhaoxd.github.io/sitemap-0.xml`
+- `curl -I https://yuanhaoxd.github.io/sitemap.xml`
 
 Expected:
 - `HTTP 200`
 - `Content-Type: application/xml` (or `text/xml`)
-
-Web Analytics check:
-
-1. Open any production page on `https://danarnoux.com/`.
-2. DevTools -> Network, filter `beacon` or `rum`.
-3. Verify:
-   - `beacon.min.js` loads successfully.
-   - Request to `cloudflareinsights.com/cdn-cgi/rum` succeeds (200/204).

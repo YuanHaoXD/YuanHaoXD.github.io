@@ -11,14 +11,4 @@ export type FriendLink = {
 	status?: 'active' | 'inactive';
 };
 
-export const links: FriendLink[] = [
-	{
-		name: 'Dan Arnoux',
-		kind: 'github',
-		github: 'Dancncn',
-		url: 'https://danarnoux.com',
-		description: 'Research, Engineering & Technical Notes（本站设计参考来源）',
-		tags: ['Design Reference', 'Astro', 'Blog'],
-		status: 'active',
-	},
-];
+export const links: FriendLink[] = [];
