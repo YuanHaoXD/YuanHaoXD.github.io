@@ -1,0 +1,557 @@
+---
+/*
+ * Home hero — full-bleed key visual built on the original wallpaper.
+ * Motion (GSAP + SplitText + ScrollTrigger):
+ *   intro   : frame un-clips, image settles, wordmark rises char by char
+ *   pointer : layered parallax (image ↔ text ↔ badge move at different depths)
+ *   scroll  : image drifts/zooms, wordmark lifts and fades, frame insets
+ * The intro waits for the splash curtain (`yh:splash-reveal`) when it is playing.
+ */
+const BASE = import.meta.env.BASE_URL;
+const HERO_IMAGE = `${BASE}img/hero-bg.jpg`;
+const AVATAR = `${BASE}img/avatar.jpg`;
+const BADGE_TEXT = 'THINK · BUILD · RECORD · ';
+const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
+---
+
+<section class="yh-hero" data-hero>
+	<div class="yh-hero__frame" data-hero-frame>
+		<div class="yh-hero__media" data-hero-media>
+			<img src={HERO_IMAGE} alt="YuanHao's Space 主视觉" data-hero-img fetchpriority="high" />
+		</div>
+		<div class="yh-hero__shade" aria-hidden="true"></div>
+		<div class="yh-hero__halftone" aria-hidden="true"></div>
+
+		<div class="yh-hero__top">
+			<span class="yh-hero__chip" data-hero-fade>
+				<span class="yh-hero__live"></span>
+				Personal Space · Est. 2026
+			</span>
+			<span class="yh-hero__chip yh-hero__chip--ghost" data-hero-fade>思考 · 工程 · 记录</span>
+		</div>
+
+		<div class="yh-hero__badge" data-hero-badge aria-hidden="true">
+			<svg viewBox="0 0 200 200" data-hero-badge-ring>
+				<defs>
+					<path id="yh-badge-circle" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"></path>
+				</defs>
+				<text><textPath href="#yh-badge-circle" textLength="486" lengthAdjust="spacing">{BADGE_TEXT}</textPath></text>
+			</svg>
+			<img src={AVATAR} alt="" width="84" height="84" />
+		</div>
+
+		<div class="yh-hero__copy" data-hero-copy>
+			<h1 class="yh-hero__title brand-wordmark" data-hero-title transition:name="page-title">
+				<span data-hero-split>YuanHao</span>
+				<em data-hero-split>Blog</em>
+			</h1>
+			<div class="yh-hero__meta">
+				<p data-hero-fade>Notes on engineering, systems, and long-form writing.</p>
+				<a href="#home-intro" class="yh-hero__scroll" data-hero-fade aria-label="向下滚动">
+					<span>Scroll</span>
+					<i></i>
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="yh-hero__marquee" aria-hidden="true">
+		<div class="yh-hero__track" data-hero-track>
+			{
+				[0, 1, 2, 3].map(() =>
+					MARQUEE.map((w) => (
+						<span>
+							{w}
+							<i>✦</i>
+						</span>
+					)),
+				)
+			}
+		</div>
+	</div>
+</section>
+
+<style is:global>
+	.yh-hero {
+		position: relative;
+	}
+
+	.yh-hero__frame {
+		position: relative;
+		height: clamp(440px, 76svh, 780px);
+		border-radius: 28px;
+		overflow: hidden;
+		isolation: isolate;
+		container-type: inline-size;
+		background: #18181b;
+		box-shadow: 0 30px 80px -30px rgba(15, 23, 42, 0.35);
+		will-change: clip-path, transform;
+	}
+
+	.yh-hero__media {
+		position: absolute;
+		inset: -6%;
+		will-change: transform;
+	}
+
+	.yh-hero__media img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: 72% center;
+		will-change: transform;
+	}
+
+	.yh-hero__shade {
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(to top, rgba(9, 9, 11, 0.78) 0%, rgba(9, 9, 11, 0.32) 34%, transparent 58%),
+			linear-gradient(to bottom, rgba(9, 9, 11, 0.35), transparent 22%);
+	}
+
+	.yh-hero__halftone {
+		position: absolute;
+		right: -4%;
+		bottom: -6%;
+		width: 46%;
+		height: 60%;
+		background-image: radial-gradient(rgba(226, 190, 110, 0.55) 1.3px, transparent 1.8px);
+		background-size: 14px 14px;
+		mask-image: radial-gradient(ellipse at 80% 80%, #000 0%, transparent 65%);
+		-webkit-mask-image: radial-gradient(ellipse at 80% 80%, #000 0%, transparent 65%);
+		mix-blend-mode: screen;
+		opacity: 0.7;
+		pointer-events: none;
+	}
+
+	.yh-hero__top {
+		position: absolute;
+		inset: 20px 20px auto 20px;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 10px;
+		z-index: 3;
+	}
+
+	.yh-hero__chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 7px 14px;
+		border-radius: 999px;
+		border: 1px solid rgba(255, 255, 255, 0.28);
+		background: rgba(255, 255, 255, 0.16);
+		backdrop-filter: blur(14px) saturate(160%);
+		-webkit-backdrop-filter: blur(14px) saturate(160%);
+		color: #fafafa;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.yh-hero__chip--ghost {
+		letter-spacing: 0.3em;
+	}
+
+	.yh-hero__live {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #4ade80;
+		box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+		animation: yh-live 2.2s infinite;
+	}
+
+	@keyframes yh-live {
+		70% {
+			box-shadow: 0 0 0 9px rgba(74, 222, 128, 0);
+		}
+		100% {
+			box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+		}
+	}
+
+	.yh-hero__badge {
+		position: absolute;
+		right: clamp(20px, 4vw, 48px);
+		top: 50%;
+		z-index: 3;
+		width: 150px;
+		height: 150px;
+		margin-top: -110px;
+		display: grid;
+		place-items: center;
+	}
+
+	.yh-hero__badge::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background: rgba(9, 9, 11, 0.28);
+		border: 1px solid rgba(255, 255, 255, 0.22);
+		backdrop-filter: blur(10px) saturate(150%);
+		-webkit-backdrop-filter: blur(10px) saturate(150%);
+	}
+
+	.yh-hero__badge svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+
+	.yh-hero__badge text {
+		fill: #fafafa;
+		font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+		font-size: 15px;
+		font-weight: 500;
+	}
+
+	.yh-hero__badge img {
+		position: relative;
+		width: 84px;
+		height: 84px;
+		border-radius: 50%;
+		border: 2px solid rgba(255, 255, 255, 0.85);
+		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+		object-fit: cover;
+	}
+
+	.yh-hero__copy {
+		position: absolute;
+		inset: auto 0 0 0;
+		z-index: 3;
+		padding: 0 clamp(20px, 4vw, 48px) clamp(22px, 4vw, 40px);
+		color: #fafafa;
+	}
+
+	.yh-hero__title {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 0.22em;
+		margin: 0;
+		color: #fafafa;
+		font-weight: 400;
+		font-size: clamp(56px, 14.5cqw, 190px);
+		line-height: 0.88;
+		letter-spacing: -0.02em;
+		text-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+	}
+
+	.yh-hero__title em {
+		font-style: italic;
+		background: linear-gradient(135deg, #f3d48a, #e2be6e 45%, #b47e24);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		text-shadow: none;
+		padding-right: 0.08em;
+	}
+
+	/* SplitText line masks: let italics breathe so glyph tails aren't clipped. */
+	.yh-hero__title .yh-line {
+		padding: 0 0.1em 0.1em 0;
+		margin-right: -0.1em;
+	}
+
+	/* SplitText wraps each glyph in its own box, so the gold gradient must be
+	   re-applied per char (background-clip doesn't reach nested blocks). */
+	.yh-hero__title em .yh-char {
+		background: linear-gradient(135deg, #f3d48a, #e2be6e 45%, #b47e24);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		padding-right: 0.06em;
+	}
+
+	.yh-hero__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px 24px;
+		margin-top: 18px;
+		padding-top: 16px;
+		border-top: 1px solid rgba(255, 255, 255, 0.22);
+	}
+
+	.yh-hero__meta p {
+		margin: 0;
+		font-size: 15px;
+		color: rgba(250, 250, 250, 0.82);
+	}
+
+	.yh-hero__scroll {
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
+		color: rgba(250, 250, 250, 0.82);
+		font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+		font-size: 11px;
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		text-decoration: none;
+	}
+
+	.yh-hero__scroll i {
+		position: relative;
+		width: 54px;
+		height: 1px;
+		background: rgba(255, 255, 255, 0.3);
+		overflow: hidden;
+	}
+
+	.yh-hero__scroll i::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: #e2be6e;
+		transform: translateX(-100%);
+		animation: yh-scroll-cue 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+	}
+
+	@keyframes yh-scroll-cue {
+		to {
+			transform: translateX(100%);
+		}
+	}
+
+	.yh-hero__marquee {
+		margin-top: clamp(20px, 3vw, 32px);
+		border-block: 2px solid var(--line, #231f20);
+		background: var(--slate, #686e87);
+		overflow: hidden;
+	}
+
+	.yh-hero__track {
+		display: flex;
+		width: max-content;
+		padding: 10px 0;
+		will-change: transform;
+	}
+
+	.yh-hero__track span {
+		display: inline-flex;
+		align-items: center;
+		gap: 26px;
+		padding-right: 26px;
+		font-family: 'Unbounded', 'Arial Black', sans-serif;
+		font-weight: 900;
+		font-size: 22px;
+		text-transform: uppercase;
+		color: #f1ece3;
+		-webkit-text-stroke: 1.5px #231f20;
+		paint-order: stroke fill;
+		white-space: nowrap;
+	}
+
+	.yh-hero__track i {
+		font-style: normal;
+		color: var(--sun, #f4c64e);
+	}
+
+	/* Pre-intro state (only when JS is available, so no-JS still sees everything). */
+	html.js-reveal .yh-hero [data-hero-title],
+	html.js-reveal .yh-hero [data-hero-fade],
+	html.js-reveal .yh-hero [data-hero-badge] {
+		visibility: hidden;
+	}
+
+	@media (max-width: 767px) {
+		.yh-hero__frame {
+			border-radius: 22px;
+		}
+		.yh-hero__badge {
+			width: 108px;
+			height: 108px;
+			top: 84px;
+			margin-top: 0;
+			right: 14px;
+		}
+		.yh-hero__badge img {
+			width: 58px;
+			height: 58px;
+		}
+		.yh-hero__badge text {
+			font-size: 17px;
+		}
+		.yh-hero__chip--ghost {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.yh-hero__live,
+		.yh-hero__scroll i::after {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+	import { SplitText } from 'gsap/SplitText';
+
+	gsap.registerPlugin(ScrollTrigger, SplitText);
+
+	let ctx: gsap.Context | null = null;
+	let cleanupPointer: (() => void) | null = null;
+
+	const teardown = () => {
+		cleanupPointer?.();
+		cleanupPointer = null;
+		ctx?.revert();
+		ctx = null;
+	};
+
+	const init = async () => {
+		const hero = document.querySelector<HTMLElement>('[data-hero]');
+		if (!hero || hero.dataset.bound === 'true') return;
+		hero.dataset.bound = 'true';
+		teardown();
+
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+		// Measure glyphs only after the wordmark face is in.
+		try {
+			await document.fonts.ready;
+		} catch {}
+
+		const q = <T extends Element = HTMLElement>(s: string) => hero.querySelector<T>(s)!;
+		const frame = q('[data-hero-frame]');
+		const media = q('[data-hero-media]');
+		const img = q('[data-hero-img]');
+		const title = q('[data-hero-title]');
+		const copy = q('[data-hero-copy]');
+		const badge = q('[data-hero-badge]');
+		const ring = q<SVGElement>('[data-hero-badge-ring]');
+		const fades = hero.querySelectorAll('[data-hero-fade]');
+		const track = hero.querySelector<HTMLElement>('[data-hero-track]');
+
+		ctx = gsap.context(() => {
+			// scrolling band: steady loop, sped up (and reversed) by scroll velocity
+			if (track && !reduced) {
+				const marquee = gsap.to(track, { xPercent: -50, duration: 28, ease: 'none', repeat: -1 });
+				ScrollTrigger.create({
+					trigger: hero,
+					start: 'top bottom',
+					end: 'bottom top',
+					onUpdate: (self) => {
+						const v = 1 + Math.min(Math.abs(self.getVelocity()) / 300, 5);
+						gsap.to(marquee, { timeScale: self.direction * v, duration: 0.2, overwrite: true });
+						gsap.to(marquee, { timeScale: self.direction, duration: 1.2, delay: 0.25 });
+					},
+				});
+			}
+
+			if (reduced) {
+				gsap.set([title, badge, fades], { autoAlpha: 1 });
+				return;
+			}
+
+			const split = SplitText.create(hero.querySelectorAll('[data-hero-split]'), {
+				type: 'chars,lines',
+				mask: 'lines',
+				charsClass: 'yh-char',
+				linesClass: 'yh-line',
+			});
+
+			gsap.set(title, { autoAlpha: 1 });
+			gsap.set(split.chars, { yPercent: 115, rotate: 7 });
+			gsap.set(fades, { autoAlpha: 0, y: 16 });
+			gsap.set(badge, { autoAlpha: 0, scale: 0.6, rotate: -40 });
+			// A loader may hand its frame straight into this one (image already in
+			// place, so only type and ornaments animate). Otherwise run the full intro,
+			// started by the loader's reveal if one is playing.
+			const w = window as any;
+			const handoff = !!w.__yhSplashFrameHandoff;
+			const waitForSplash = w.__yhSplashActive && !w.__yhSplashRevealed;
+			const textAt = handoff ? 0 : 0.75;
+
+			const intro = gsap.timeline({ paused: true, defaults: { ease: 'expo.out' } });
+			if (!handoff) {
+				gsap.set(frame, { clipPath: 'inset(9% 7% 9% 7% round 44px)' });
+				gsap.set(img, { scale: 1.32 });
+				intro
+					.to(frame, { clipPath: 'inset(0% 0% 0% 0% round 28px)', duration: 1.6, ease: 'expo.inOut' }, 0)
+					.to(img, { scale: 1, duration: 2.2 }, 0);
+			}
+			intro
+				.to(split.chars, { yPercent: 0, rotate: 0, duration: 1.3, stagger: 0.045 }, textAt)
+				.to(badge, { autoAlpha: 1, scale: 1, rotate: 0, duration: 1.4, ease: 'back.out(1.6)' }, textAt + 0.25)
+				.to(fades, { autoAlpha: 1, y: 0, duration: 1, stagger: 0.08 }, textAt + 0.35);
+
+			// Slow perpetual spin; scroll velocity briefly spins it faster.
+			const spin = gsap.to(ring, { rotate: 360, duration: 22, ease: 'none', repeat: -1, transformOrigin: '50% 50%' });
+
+			// Scroll-linked depth.
+			const scrollTl = gsap.timeline({
+				scrollTrigger: {
+					trigger: frame,
+					start: 'top top+=64',
+					end: 'bottom top+=64',
+					scrub: 0.8,
+					onUpdate: (self) => {
+						const boost = 1 + Math.min(Math.abs(self.getVelocity()) / 400, 6);
+						gsap.to(spin, { timeScale: boost, duration: 0.2, overwrite: true });
+						gsap.to(spin, { timeScale: 1, duration: 1.2, delay: 0.2, overwrite: false });
+					},
+				},
+			});
+			scrollTl
+				.to(media, { yPercent: 14, scale: 1.12, ease: 'none' }, 0)
+				.to(copy, { yPercent: -45, autoAlpha: 0.15, ease: 'none' }, 0)
+				.to(badge, { yPercent: -80, ease: 'none' }, 0)
+				.to(frame, { scale: 0.94, ease: 'none' }, 0);
+
+			// Pointer parallax: three depths.
+			if (finePointer) {
+				const mx = gsap.quickTo(media, 'x', { duration: 1.2, ease: 'power3.out' });
+				const my = gsap.quickTo(media, 'y', { duration: 1.2, ease: 'power3.out' });
+				const tx = gsap.quickTo(title, 'x', { duration: 1, ease: 'power3.out' });
+				const ty = gsap.quickTo(title, 'y', { duration: 1, ease: 'power3.out' });
+				const bx = gsap.quickTo(badge, 'x', { duration: 0.9, ease: 'power3.out' });
+				const by = gsap.quickTo(badge, 'y', { duration: 0.9, ease: 'power3.out' });
+				const onMove = (e: PointerEvent) => {
+					const r = frame.getBoundingClientRect();
+					const px = (e.clientX - r.left) / r.width - 0.5;
+					const py = (e.clientY - r.top) / r.height - 0.5;
+					mx(px * -28);
+					my(py * -20);
+					tx(px * 14);
+					ty(py * 8);
+					bx(px * 26);
+					by(py * 20);
+				};
+				const onLeave = () => {
+					mx(0); my(0); tx(0); ty(0); bx(0); by(0);
+				};
+				frame.addEventListener('pointermove', onMove);
+				frame.addEventListener('pointerleave', onLeave);
+				cleanupPointer = () => {
+					frame.removeEventListener('pointermove', onMove);
+					frame.removeEventListener('pointerleave', onLeave);
+				};
+			}
+
+			const play = () => intro.play();
+			if (waitForSplash) {
+				window.addEventListener('yh:splash-reveal', play, { once: true });
+			} else {
+				// Small delay so the page curtain has started lifting.
+				gsap.delayedCall(0.15, play);
+			}
+		}, hero);
+	};
+
+	document.addEventListener('astro:page-load', init);
+	document.addEventListener('astro:before-swap', teardown);
+</script>

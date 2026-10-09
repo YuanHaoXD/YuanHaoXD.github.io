@@ -138,14 +138,6 @@ const charsLabel = chars.toLocaleString('en-US');
 									<p class="m-0 text-sm text-zinc-500 dark:text-zinc-400">
 										<FormattedDate date={pubDate} />
 										<span class="mx-1.5">&middot;</span>
-										<span class="inline-flex items-center gap-1 align-middle" data-post-views-root={analyticsKey ?? ''}>
-											<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 opacity-70" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-												<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke-linecap="round" stroke-linejoin="round" />
-												<circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" />
-											</svg>
-											<span data-post-views>...</span>
-										</span>
-										<span class="mx-1.5">&middot;</span>
 										<span>{charsLabel} chars</span>
 										<span class="mx-1.5">&middot;</span>
 										<span>{minutes} min</span>
@@ -261,13 +253,6 @@ const charsLabel = chars.toLocaleString('en-US');
 														) : (
 														<span></span>
 														)}
-														<span class="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500" data-related-post-views-root={relatedAnalyticsKey}>
-															<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 opacity-70" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-																<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke-linecap="round" stroke-linejoin="round" />
-																<circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round" />
-															</svg>
-															<span data-related-post-views>...</span>
-														</span>
 													</div>
 												</a>
 												</div>
@@ -837,97 +822,6 @@ const charsLabel = chars.toLocaleString('en-US');
 				initTocScrollFades();
 				initImageLightbox();
 				initBackToTop();
-				loadPostViews();
-				loadRelatedPostViews();
-			};
-
-			const formatViewCount = window.__formatFullViewCount || function(c) { var v = Number(c); return (!Number.isFinite(v) || v < 0) ? '0 views' : v.toLocaleString('en-US') + ' ' + (v === 1 ? 'view' : 'views'); };
-			const formatCompactViewCount = window.__formatCompactViewCount || function(c) { var v = Number(c); return (!Number.isFinite(v) || v < 0) ? '0' : v >= 1000 ? (v/1000).toFixed(v >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k' : v.toLocaleString('en-US'); };
-
-			const loadPostViews = async () => {
-				const root = document.querySelector('[data-post-views-root]');
-				const output = document.querySelector('[data-post-views]');
-				if (!(root instanceof HTMLElement) || !(output instanceof HTMLElement)) return;
-
-				const slug = root.dataset.postViewsRoot || '';
-				if (!slug) {
-					output.textContent = '0 views';
-					return;
-				}
-
-				if (window.__activePostViewsSlug === slug) return;
-				window.__activePostViewsSlug = slug;
-
-				const apiBase = '';
-				const sessionKey = `blog_viewed:${slug}`;
-				const hasViewedInSession = (() => {
-					try {
-						return sessionStorage.getItem(sessionKey) === '1';
-					} catch {
-						return false;
-					}
-				})();
-
-				try {
-					const response = hasViewedInSession
-						? await fetch(`${apiBase}/api/views?post=${encodeURIComponent(slug)}`)
-						: await fetch(`${apiBase}/api/views`, {
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								body: JSON.stringify({ post: slug }),
-							});
-
-					if (response.ok) {
-						const data = await response.json();
-						if (!hasViewedInSession) {
-							try {
-								sessionStorage.setItem(sessionKey, '1');
-							} catch {}
-						}
-						output.textContent = formatViewCount(data?.views ?? 0);
-						return;
-					}
-				} catch {}
-
-				try {
-					const fallback = await fetch(`${apiBase}/api/views?post=${encodeURIComponent(slug)}`);
-					if (!fallback.ok) throw new Error('views_get_failed');
-					const data = await fallback.json();
-					output.textContent = formatViewCount(data?.views ?? 0);
-				} catch {
-					output.textContent = '0 views';
-				}
-			};
-
-			const loadRelatedPostViews = async () => {
-				const roots = Array.from(document.querySelectorAll('[data-related-post-views-root]'));
-				if (!roots.length) return;
-
-				const apiBase = '';
-				const uniqueKeys = [...new Set(
-					roots
-						.map((root) => root.getAttribute('data-related-post-views-root') || '')
-						.filter(Boolean)
-				)];
-
-				await Promise.all(uniqueKeys.map(async (key) => {
-					let text = '0';
-					try {
-						const response = await fetch(`${apiBase}/api/views?post=${encodeURIComponent(key)}`);
-						if (response.ok) {
-							const data = await response.json();
-							text = formatCompactViewCount(data?.views ?? 0);
-						}
-					} catch {}
-
-					document
-						.querySelectorAll(`[data-related-post-views-root="${key}"] [data-related-post-views]`)
-						.forEach((node) => {
-							node.textContent = text;
-						});
-				}));
 			};
 
 			onPostPageLoad();

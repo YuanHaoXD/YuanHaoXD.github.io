@@ -1,0 +1,815 @@
+---
+/*
+ * Entrance — "a star falls out of the sky".
+ * Art direction after makemepulse's Nomadic Tribe (2019): fine ink line art,
+ * flat muted fills (slate / dusty pink / cream / teal), heavy paper grain,
+ * an arched window framed by hatched pillars, a chunky wide title, and a
+ * rough-edged dialog box.
+ *
+ * Choreography
+ *   1. slate screen; a boiling hand-drawn line grows with load progress
+ *   2. a cream disc opens from the line and floods the screen; the arch scene
+ *      inks itself in (rings draw, pillars rise, clouds drift, title rises)
+ *   3. a caption says "look up"; a star tumbles out of the sky trailing ink
+ *   4. impact — squash & rebound, screen shake, ink cracks, ripples, dust,
+ *      title letters knocked loose; the star lights up while captions
+ *      tell the story
+ *   5. the star flares; the camera pushes in on it while its light blooms to
+ *      fill the screen, then the light settles away onto the site
+ *      (`yh:splash-reveal` starts the hero intro)
+ *
+ * The full story plays on every hard load of the home page (and the first
+ * hard load of any page in a session); other repeat hard loads get a ~1.5s
+ * quick cut (line → hole). Click or the skip button fast-forwards. Gate: `html.is-splashing`, set in BaseHead.
+ */
+const INK = '#231f20';
+const SLATE = '#686e87';
+const PINK = '#e9a99a';
+const TEAL = '#8fb5b0';
+const PAPER = '#f1ece3';
+const TITLE = 'YUANHAO';
+// Captions typed into the dialog box, one per beat of the story.
+const CAPTIONS = ['抬头看——有什么东西掉下来了。', '咚！一颗星星，落在了这里。', '欢迎来到 YuanHao 的小站。'];
+
+// Window geometry (viewBox 0 0 760 600)
+const CX = 380;
+const CY = 290;
+const R = 236;
+const GROUND = 404; // horizon inside the window
+const IMPACT_Y = 432;
+// Five-point star standing on its two lower tips at the impact point.
+const STAR_R = 62;
+const STAR_IR = 27;
+const STAR_CY = IMPACT_Y - STAR_R * Math.cos(Math.PI / 5); // lower tips touch the ground
+const starPoints = (cx: number, cy: number, R: number, r: number) =>
+	Array.from({ length: 10 }, (_, k) => {
+		const a = -Math.PI / 2 + (k * Math.PI) / 5;
+		const rad = k % 2 ? r : R;
+		return `${(cx + rad * Math.cos(a)).toFixed(1)},${(cy + rad * Math.sin(a)).toFixed(1)}`;
+	}).join(' ');
+const STAR = starPoints(CX, STAR_CY, STAR_R, STAR_IR);
+const STAR_INNER = starPoints(CX - 3, STAR_CY - 4, STAR_R * 0.62, STAR_IR * 0.62);
+const rays = Array.from({ length: 12 }, (_, i) => {
+	const a = (i / 12) * Math.PI * 2;
+	const r1 = i % 2 ? 84 : 78;
+	const r2 = i % 2 ? 96 : 108;
+	return { x1: CX + r1 * Math.cos(a), y1: STAR_CY + r1 * Math.sin(a), x2: CX + r2 * Math.cos(a), y2: STAR_CY + r2 * Math.sin(a) };
+});
+
+// Line-art cloud: flat base, four bumps. Drawn at the origin, placed by transform.
+const CLOUD = 'M0 0 H124 A18 18 0 0 0 116 -30 A24 24 0 0 0 78 -46 A30 30 0 0 0 26 -40 A20 20 0 0 0 0 0 Z';
+const clouds = [
+	{ x: 168, y: 300, s: 1.15, layer: 'back' },
+	{ x: 470, y: 272, s: 0.9, layer: 'back' },
+	{ x: 250, y: 360, s: 1.35, layer: 'front' },
+	{ x: 430, y: 380, s: 1.2, layer: 'front' },
+];
+
+const cracks = [
+	'M380 434 l-34 6 l-20 -7 l-30 12 l-26 -4',
+	'M380 434 l38 9 l24 -9 l34 13 l22 -3',
+	'M380 434 l-10 22 l12 20 l-8 26',
+	'M380 434 l16 18 l-6 24 l14 22',
+	'M380 434 l-46 26 l-18 30',
+	'M380 434 l50 24 l16 34',
+];
+
+const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 + ((i * 7) % 9) }));
+---
+
+<div class="ld" data-splash aria-hidden="true">
+	<!-- 1 · slate stage with the boiling line -->
+	<div class="ld__slate"></div>
+	<svg class="ld__line"><path data-ld-line-path></path></svg>
+
+	<!-- 2 · paper flood + illustrated scene -->
+	<div class="ld__paper" data-ld-paper>
+		<div class="ld__stage" data-ld-stage>
+			<svg class="ld__scene" viewBox="0 0 760 600" data-ld-scene>
+				<defs>
+					<clipPath id="ld-win"><circle cx={CX} cy={CY} r={R}></circle></clipPath>
+					<pattern id="ld-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+						<line x1="0" y1="0" x2="0" y2="9" stroke={INK} stroke-width="2.2"></line>
+					</pattern>
+					<pattern id="ld-hatch-fine" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+						<line x1="0" y1="0" x2="0" y2="6" stroke={INK} stroke-width="1" opacity="0.45"></line>
+					</pattern>
+					<clipPath id="ld-star-shade"><rect x={CX + 6} y={STAR_CY - 80} width="90" height="160"></rect></clipPath>
+					<linearGradient id="ld-sky" x1="0" y1="0" x2="0" y2="1">
+						<stop offset="0" stop-color="#f0d3cd"></stop>
+						<stop offset="1" stop-color="#f8eee6"></stop>
+					</linearGradient>
+				</defs>
+
+				<!-- side pillars -->
+				<g data-ld-pillar>
+					<path d="M54 560 V300 a45 45 0 0 1 90 0 V560 Z" fill={TEAL} stroke={INK} stroke-width="2.5"></path>
+					<path d="M54 560 V300 a45 45 0 0 1 90 0 V560 Z" fill="url(#ld-hatch-fine)"></path>
+					<path d="M70 560 V306 a29 29 0 0 1 58 0 V560" fill="none" stroke={INK} stroke-width="1.5"></path>
+					<circle cx="99" cy="300" r="9" fill={PAPER} stroke={INK} stroke-width="2"></circle>
+				</g>
+				<g data-ld-pillar>
+					<path d="M616 560 V300 a45 45 0 0 1 90 0 V560 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
+					<path d="M616 560 V300 a45 45 0 0 1 90 0 V560 Z" fill="url(#ld-hatch-fine)"></path>
+					<path d="M632 560 V306 a29 29 0 0 1 58 0 V560" fill="none" stroke={INK} stroke-width="1.5"></path>
+					<circle cx="661" cy="300" r="9" fill={PAPER} stroke={INK} stroke-width="2"></circle>
+				</g>
+
+				<!-- hatched corner wedges -->
+				<g data-ld-wedge>
+					<path d="M122 120 H196 Q150 170 140 236 H122 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
+					<path d="M122 120 H196 Q150 170 140 236 H122 Z" fill="url(#ld-hatch)" opacity="0.5"></path>
+				</g>
+				<g data-ld-wedge>
+					<path d="M638 120 H564 Q610 170 620 236 H638 Z" fill={SLATE} stroke={INK} stroke-width="2.5"></path>
+					<path d="M638 120 H564 Q610 170 620 236 H638 Z" fill="url(#ld-hatch)" opacity="0.5"></path>
+				</g>
+
+				<!-- the window -->
+				<g clip-path="url(#ld-win)" data-ld-window>
+					<rect x="140" y="50" width="480" height="480" fill="url(#ld-sky)"></rect>
+					<circle cx="520" cy="150" r="30" fill={PAPER} stroke={INK} stroke-width="2.5"></circle>
+					<g data-ld-clouds="back">
+						{
+							clouds
+								.filter((c) => c.layer === 'back')
+								.map((c) => (
+									<g>
+										<g transform={`translate(${c.x} ${c.y}) scale(${c.s})`}>
+											<path d={CLOUD} fill="#fbf6ef" stroke={INK} stroke-width="2.2" stroke-linejoin="round" />
+										</g>
+									</g>
+								))
+						}
+					</g>
+					<g data-ld-mountains>
+						<path d="M150 404 L214 330 L250 370 L286 344 L338 404 Z" fill={PINK} stroke={INK} stroke-width="2.5" stroke-linejoin="round"></path>
+						<path d="M440 404 L506 352 L540 380 L586 336 L630 404 Z" fill="#d9b6c8" stroke={INK} stroke-width="2.5" stroke-linejoin="round"></path>
+					</g>
+					<g data-ld-clouds="front">
+						{
+							clouds
+								.filter((c) => c.layer === 'front')
+								.map((c) => (
+									<g>
+										<g transform={`translate(${c.x} ${c.y}) scale(${c.s})`}>
+											<path d={CLOUD} fill="#fffaf3" stroke={INK} stroke-width="2.2" stroke-linejoin="round" />
+										</g>
+									</g>
+								))
+						}
+					</g>
+					<g data-ld-ground>
+						<rect x="140" y={GROUND} width="480" height="140" fill={SLATE}></rect>
+						<rect x="140" y={GROUND} width="480" height="140" fill="url(#ld-hatch-fine)" opacity="0.6"></rect>
+						<line x1="140" y1={GROUND} x2="620" y2={GROUND} stroke={INK} stroke-width="2.5"></line>
+					</g>
+					<g data-ld-ripples fill="none" stroke={PAPER} stroke-width="2.2">
+						{[0, 1, 2].map(() => <ellipse cx={CX} cy={IMPACT_Y} rx="70" ry="13" />)}
+					</g>
+					<g data-ld-cracks fill="none" stroke={INK} stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+						{cracks.map((d) => <path d={d} pathLength="1" />)}
+					</g>
+					<ellipse cx={CX} cy={IMPACT_Y} rx="62" ry="10" fill={INK} opacity="0.28" data-ld-shadow></ellipse>
+					<g data-ld-dust>
+						{dust.map((d) => <circle cx={CX} cy={IMPACT_Y - 6} r={d.r} fill={PAPER} stroke={INK} stroke-width="2" data-side={d.side} />)}
+					</g>
+					<g data-ld-rays stroke={INK} stroke-width="3" stroke-linecap="round">
+						{rays.map((r) => <line x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} />)}
+					</g>
+					<g data-ld-fall>
+						<g data-ld-trail fill="none" stroke={INK} stroke-width="2.5" stroke-linecap="round">
+							<path d={`M${CX + 30} ${STAR_CY - 30} C${CX + 90} ${STAR_CY - 120} ${CX + 150} ${STAR_CY - 170} ${CX + 260} ${STAR_CY - 300}`} />
+							<path d={`M${CX + 8} ${STAR_CY - 44} C${CX + 60} ${STAR_CY - 150} ${CX + 120} ${STAR_CY - 210} ${CX + 200} ${STAR_CY - 330}`} stroke-dasharray="2 14" />
+							<path d={`M${CX + 50} ${STAR_CY - 8} C${CX + 120} ${STAR_CY - 90} ${CX + 190} ${STAR_CY - 140} ${CX + 300} ${STAR_CY - 250}`} stroke-dasharray="22 12" />
+						</g>
+						<g data-ld-squash>
+							<g data-ld-star>
+								<polygon points={STAR} fill="#f4c64e" stroke={INK} stroke-width="4" stroke-linejoin="round"></polygon>
+								<polygon points={STAR} fill="url(#ld-hatch-fine)" opacity="0.7" clip-path="url(#ld-star-shade)"></polygon>
+								<polygon points={STAR_INNER} fill="none" stroke="#fff6d8" stroke-width="3" stroke-linejoin="round" opacity="0.9"></polygon>
+							</g>
+							<g stroke={INK} stroke-width="2.5" stroke-linecap="round" data-ld-sparkle>
+								<path d={`M${CX - 86} ${STAR_CY - 46} v16 M${CX - 94} ${STAR_CY - 38} h16`} />
+								<path d={`M${CX + 82} ${STAR_CY - 60} v12 M${CX + 76} ${STAR_CY - 54} h12`} />
+								<path d={`M${CX + 92} ${STAR_CY + 6} v10 M${CX + 87} ${STAR_CY + 11} h10`} />
+							</g>
+						</g>
+					</g>
+				</g>
+
+				<!-- arch rings drawn over the window edge -->
+				<g fill="none" stroke={INK} data-ld-rings>
+					<circle cx={CX} cy={CY} r={R} stroke-width="3" pathLength="1"></circle>
+					<circle cx={CX} cy={CY} r={R + 10} stroke-width="1.6" pathLength="1"></circle>
+				</g>
+				<line x1="40" y1="560" x2="720" y2="560" stroke={INK} stroke-width="2.5" pathLength="1" data-ld-plinth></line>
+			</svg>
+
+			<h1 class="ld__title">
+				{[...TITLE].map((c) => <span class="ld__tch"><span data-ld-ch>{c}</span></span>)}
+			</h1>
+
+			<div class="ld__dialog" data-ld-dialog>
+				<svg class="ld__dialog-frame" viewBox="0 0 400 90" preserveAspectRatio="none">
+					<path d="M6 8 L120 5 L250 9 L394 6 L392 44 L395 84 L260 81 L130 85 L5 82 L8 46 Z" fill="#fbf7f0" stroke={INK} stroke-width="2"></path>
+				</svg>
+				<p data-ld-dialog-text data-captions={JSON.stringify(CAPTIONS)}></p>
+			</div>
+		</div>
+	</div>
+
+	<header class="ld__bar" data-ld-bar>
+		<span>YuanHao®</span>
+		<span class="ld__hide-sm">A small archive · 2026</span>
+		<span>Loading <b data-ld-pct>000</b>%</span>
+	</header>
+
+	<button class="ld__skip" type="button" data-ld-skip aria-label="Skip intro">
+		<svg viewBox="0 0 24 24"><path d="M5 5 L13 12 L5 19 Z M12 5 L20 12 L12 19 Z" fill="currentColor"></path></svg>
+	</button>
+
+	<div class="ld__grain"></div>
+</div>
+
+<style is:global>
+	.ld {
+		display: none;
+	}
+
+	html.is-splashing {
+		overflow: hidden;
+		/* CSS-only failsafe for when the script never runs. */
+		animation: ld-unlock 0s linear 30s forwards;
+	}
+
+	@keyframes ld-unlock {
+		to {
+			overflow: visible;
+		}
+	}
+
+	html.is-splashing .ld {
+		--ld-ink: #231f20;
+		--ld-slate: #686e87;
+		--ld-paper: #f1ece3;
+		--ld-hx: 50vw;
+		--ld-hy: 60vh;
+		--ld-r: 0px;
+		position: fixed;
+		inset: 0;
+		z-index: 2147483000;
+		display: block;
+		overflow: hidden;
+		cursor: pointer;
+		/* The exit punches a growing hole through the whole loader. */
+		-webkit-mask-image: radial-gradient(circle at var(--ld-hx) var(--ld-hy), transparent var(--ld-r), #000 calc(var(--ld-r) + var(--ld-feather, 1px)));
+		mask-image: radial-gradient(circle at var(--ld-hx) var(--ld-hy), transparent var(--ld-r), #000 calc(var(--ld-r) + var(--ld-feather, 1px)));
+		animation: ld-failsafe 0s linear 30s forwards;
+	}
+
+	@keyframes ld-failsafe {
+		to {
+			visibility: hidden;
+			pointer-events: none;
+		}
+	}
+
+	.ld__slate {
+		position: absolute;
+		inset: 0;
+		background: var(--ld-slate);
+	}
+
+	.ld__line {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+
+	.ld__line path {
+		fill: none;
+		stroke: var(--ld-paper);
+		stroke-width: 2;
+		stroke-linecap: round;
+	}
+
+	.ld__paper {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		background: var(--ld-paper);
+		clip-path: circle(0% at 50% 50%);
+	}
+
+	.ld__stage {
+		position: relative;
+		width: min(94vw, 106vh, 980px);
+		container-type: inline-size;
+		margin-top: 2vh;
+	}
+
+	.ld__scene {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+
+	.ld__title {
+		position: absolute;
+		left: 50%;
+		top: 86.5%;
+		display: flex;
+		margin: 0;
+		padding: 0 2.2cqw;
+		transform: translate(-50%, -50%);
+		background: var(--ld-paper);
+		font-family: 'Unbounded', 'Arial Black', sans-serif;
+		font-weight: 900;
+		font-size: 10.5cqw;
+		line-height: 1;
+		letter-spacing: 0.01em;
+		color: var(--ld-slate);
+		-webkit-text-stroke: 0.5cqw var(--ld-ink);
+		paint-order: stroke fill;
+		white-space: nowrap;
+	}
+
+	.ld__tch {
+		display: inline-block;
+		overflow: hidden;
+		padding: 0.08em 0.01em 0.1em;
+		margin: -0.08em 0 -0.1em;
+	}
+
+	.ld__tch > span {
+		display: inline-block;
+		will-change: transform;
+	}
+
+	.ld__dialog {
+		position: absolute;
+		left: 3%;
+		top: 63%;
+		width: 37cqw;
+		padding: 2.2cqw 3cqw;
+		transform-origin: 90% 0%;
+	}
+
+	.ld__dialog-frame {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+		filter: drop-shadow(0.5cqw 0.6cqw 0 rgba(35, 31, 32, 0.18));
+	}
+
+	.ld__dialog p {
+		position: relative;
+		margin: 0;
+		min-height: 1.6em;
+		font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+		font-size: max(12px, 1.9cqw);
+		line-height: 1.55;
+		color: var(--ld-ink);
+	}
+
+	.ld__bar {
+		position: absolute;
+		inset: clamp(14px, 2.6vh, 26px) clamp(16px, 3vw, 40px) auto;
+		display: flex;
+		justify-content: space-between;
+		font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+		font-size: 11px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--ld-paper);
+	}
+
+	.ld__bar b {
+		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.ld__skip {
+		position: absolute;
+		right: clamp(16px, 3vw, 40px);
+		bottom: clamp(16px, 3vh, 32px);
+		display: grid;
+		place-items: center;
+		width: 42px;
+		height: 42px;
+		padding: 0;
+		border-radius: 50%;
+		border: 1.5px solid currentColor;
+		background: transparent;
+		color: var(--ld-paper);
+		cursor: pointer;
+		transition: transform 0.3s;
+	}
+
+	.ld__skip:hover {
+		transform: scale(1.08);
+	}
+
+	.ld__skip svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	/* the star's light — a soft warm disc scaled up until it fills the screen */
+	.ld-bloom {
+		position: fixed;
+		z-index: 2147483001;
+		width: 100px;
+		height: 100px;
+		margin: -50px 0 0 -50px;
+		border-radius: 50%;
+		pointer-events: none;
+		background: radial-gradient(circle, #fffdf6 0%, #fff6dc 38%, rgba(255, 238, 196, 0.85) 56%, rgba(255, 232, 180, 0) 72%);
+		will-change: transform, opacity;
+	}
+
+	.ld__grain {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0.5;
+		mix-blend-mode: multiply;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .12 0 0 0 0 .12 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	}
+
+	/* Hide moving parts until GSAP has placed them. */
+	.ld:not(.is-ready) .ld__stage,
+	.ld:not(.is-ready) .ld__bar {
+		visibility: hidden;
+	}
+
+	@media (max-width: 640px) {
+		.ld__hide-sm {
+			display: none;
+		}
+		.ld__dialog {
+			left: 8%;
+			top: 104%;
+			width: 84cqw;
+			padding: 3cqw 4cqw;
+		}
+		.ld__dialog p {
+			font-size: 3.6cqw;
+		}
+	}
+</style>
+
+<script>
+	import { gsap } from 'gsap';
+
+	const SESSION_KEY = 'yh-splash';
+	const IMPACT = { x: 380, y: 432 }; // where the star's lower tips hit the ground
+	const STAR_C = { x: 380, y: 382 }; // the star's centre
+
+	const run = () => {
+		const root = document.documentElement;
+		const el = document.querySelector<HTMLElement>('[data-splash]');
+		if (!el || !root.classList.contains('is-splashing') || el.dataset.played) return;
+		el.dataset.played = 'true';
+		const w = window as any;
+		w.__yhSplashActive = true;
+
+		const isHome = location.pathname === import.meta.env.BASE_URL || location.pathname === `${import.meta.env.BASE_URL}index.html`;
+		let repeat = false;
+		try {
+			repeat = !isHome && sessionStorage.getItem(SESSION_KEY) === '1';
+		} catch {}
+
+		let done = false;
+		let rafLine = 0;
+		const finish = () => {
+			if (done) return;
+			done = true;
+			cancelAnimationFrame(rafLine);
+			try {
+				sessionStorage.setItem(SESSION_KEY, '1');
+			} catch {}
+			root.classList.remove('is-splashing');
+			w.__yhSplashActive = false;
+			el.remove();
+		};
+		const reveal = () => {
+			if (w.__yhSplashRevealed) return;
+			w.__yhSplashRevealed = true;
+			window.dispatchEvent(new CustomEvent('yh:splash-reveal'));
+		};
+
+		// Failsafe: release the page even if frames are throttled. Armed for the
+		// loading phase first, then re-armed to the real length of the show.
+		let failsafe = 0;
+		const armFailsafe = (seconds: number) => {
+			clearTimeout(failsafe);
+			failsafe = window.setTimeout(() => {
+				if (done) return;
+				reveal();
+				finish();
+			}, seconds * 1000);
+		};
+		armFailsafe(10);
+
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			reveal();
+			finish();
+			return;
+		}
+
+		const $ = <T extends Element = HTMLElement>(s: string) => el.querySelector<T>(s)!;
+		const $$ = <T extends Element = SVGElement>(s: string) => [...el.querySelectorAll<T>(s)];
+
+		const pct = $('[data-ld-pct]');
+		const bar = $('[data-ld-bar]');
+		const skip = $('[data-ld-skip]');
+		const paper = $('[data-ld-paper]');
+		const scene = $<SVGSVGElement>('[data-ld-scene]');
+		const stage = $('[data-ld-stage]');
+		const linePath = $<SVGPathElement>('[data-ld-line-path]');
+		const fallGroup = $<SVGGElement>('[data-ld-fall]');
+		const trail = $<SVGGElement>('[data-ld-trail]');
+		const star = $<SVGGElement>('[data-ld-star]');
+		const squash = $<SVGGElement>('[data-ld-squash]');
+		const rays = $<SVGGElement>('[data-ld-rays]');
+		const sparkles = $$('[data-ld-sparkle] path');
+		const shadow = $<SVGEllipseElement>('[data-ld-shadow]');
+		const chars = $$<HTMLElement>('[data-ld-ch]');
+		const dialog = $('[data-ld-dialog]');
+		const dialogText = $('[data-ld-dialog-text]');
+
+		// ── 1 · boiling hand-drawn line (re-jittered ~12×/s, like a hand-drawn loop)
+		const lineState = { len: 0, alpha: 1 };
+		let lastJitter = 0;
+		let seed = Math.random() * 100;
+		const drawLine = (now: number) => {
+			if (now - lastJitter > 85) {
+				lastJitter = now;
+				seed += 1.7;
+			}
+			const cx = window.innerWidth / 2;
+			const cy = window.innerHeight / 2;
+			const half = lineState.len / 2;
+			const steps = Math.max(2, Math.round(lineState.len / 7));
+			let d = '';
+			for (let i = 0; i <= steps; i++) {
+				const y = cy - half + (i / steps) * lineState.len;
+				const x = cx + Math.sin(i * 0.9 + seed) * 1.4 + Math.sin(i * 0.23 + seed * 0.5) * 2.2;
+				d += `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`;
+			}
+			linePath.setAttribute('d', lineState.len > 0.5 ? d : '');
+			linePath.style.opacity = String(lineState.alpha);
+			rafLine = requestAnimationFrame(drawLine);
+		};
+		rafLine = requestAnimationFrame(drawLine);
+
+		const progress = { n: 0 };
+		const paintPct = () => (pct.textContent = String(Math.round(progress.n)).padStart(3, '0'));
+
+		// ── initial states
+		const windowLayers = $$('[data-ld-window] > *');
+		gsap.set($$('[data-ld-rings] circle, [data-ld-plinth]'), { strokeDasharray: 1, strokeDashoffset: 1 });
+		gsap.set($$('[data-ld-cracks] path'), { strokeDasharray: 1, strokeDashoffset: 1 });
+		gsap.set($$('[data-ld-pillar]'), { y: 70, autoAlpha: 0 });
+		gsap.set($$('[data-ld-wedge]'), { scale: 0.4, autoAlpha: 0, transformOrigin: '50% 0%' });
+		gsap.set(windowLayers, { autoAlpha: 0 });
+		gsap.set($$('[data-ld-clouds="back"] > g'), { x: (i) => (i ? 90 : -90) });
+		gsap.set($$('[data-ld-clouds="front"] > g'), { x: (i) => (i ? 120 : -120) });
+		gsap.set($$('[data-ld-mountains] path'), { y: 60 });
+		gsap.set(fallGroup, { x: 330, y: -640 });
+		gsap.set(star, { rotation: -540, svgOrigin: `${STAR_C.x} ${STAR_C.y}` });
+		gsap.set(squash, { svgOrigin: `${IMPACT.x} ${IMPACT.y}` });
+		gsap.set(trail, { opacity: 0 });
+		gsap.set(rays, { scale: 0.4, autoAlpha: 0, svgOrigin: `${STAR_C.x} ${STAR_C.y}` });
+		gsap.set(sparkles, { scale: 0, transformOrigin: '50% 50%' });
+		gsap.set(shadow, { scale: 0.15, svgOrigin: `${IMPACT.x} ${IMPACT.y}`, opacity: 0.05 });
+		gsap.set($$('[data-ld-ripples] ellipse'), { scale: 0, svgOrigin: `${IMPACT.x} ${IMPACT.y}` });
+		gsap.set($$('[data-ld-dust] circle'), { scale: 0, transformOrigin: '50% 50%' });
+		gsap.set(chars, { yPercent: 110 });
+		gsap.set(dialog, { autoAlpha: 0, scale: 0.6, rotation: 4 });
+		el.classList.add('is-ready');
+
+		const loaded = new Promise<void>((resolve) => {
+			if (document.readyState === 'complete') resolve();
+			else window.addEventListener('load', () => resolve(), { once: true });
+			setTimeout(resolve, 3800);
+		});
+		const fontsIn = Promise.race([
+			document.fonts?.load('900 1em "Unbounded"').catch(() => {}) ?? Promise.resolve(),
+			new Promise((r) => setTimeout(r, 900)),
+		]);
+
+		// Loading phase: the line grows with progress.
+		const maxLen = () => Math.min(window.innerHeight * 0.34, 300);
+		const loadDur = repeat ? 0.45 : 1.4;
+		const loading = gsap
+			.timeline()
+			.to(progress, { n: 88, duration: loadDur, ease: 'power2.inOut', onUpdate: paintPct }, 0)
+			.to(lineState, { len: maxLen() * 0.88, duration: loadDur, ease: 'power2.inOut' }, 0);
+
+		let master: gsap.core.Timeline | null = null;
+		const fastForward = () => master?.timeScale(4);
+		el.addEventListener('click', fastForward);
+		skip.addEventListener('click', (e) => {
+			e.stopPropagation();
+			fastForward();
+		});
+
+		// Later hard loads in the same session get a quick cut: the line completes
+		// and the page opens straight from the centre — no scene, no story.
+		const quickCut = () => {
+			const hole = { r: 0 };
+			const tl = (master = gsap.timeline({ onComplete: finish }));
+			tl.to(progress, { n: 100, duration: 0.25, ease: 'power1.out', onUpdate: paintPct }, 0)
+				.to(lineState, { len: maxLen(), duration: 0.25, ease: 'power2.out' }, 0)
+				.to(lineState, { len: 0, alpha: 0, duration: 0.35, ease: 'expo.in' }, 0.25)
+				.add(() => el.style.setProperty('--ld-feather', '140px'), 0.5)
+				.to(
+					hole,
+					{
+						r: () => Math.hypot(window.innerWidth, window.innerHeight) * 0.55,
+						duration: 0.9,
+						ease: 'power3.inOut',
+						onUpdate: () => el.style.setProperty('--ld-r', `${hole.r}px`),
+					},
+					0.5,
+				)
+				.add(reveal, 0.65);
+		};
+
+		Promise.all([loaded, fontsIn, loading.then()]).then(() => {
+			if (repeat) {
+				el.style.setProperty('--ld-hx', '50vw');
+				el.style.setProperty('--ld-hy', '50vh');
+				quickCut();
+				armFailsafe(4);
+				return;
+			}
+			const tl = (master = gsap.timeline({ onComplete: finish }));
+
+			// ── 2 · line completes, collapses, and the paper disc floods out of it
+			tl.to(progress, { n: 100, duration: 0.35, ease: 'power1.out', onUpdate: paintPct }, 0)
+				.to(lineState, { len: maxLen(), duration: 0.35, ease: 'power2.out' }, 0)
+				.to(lineState, { len: 0, alpha: 0, duration: 0.45, ease: 'expo.in' }, 0.35)
+				.to(paper, { clipPath: 'circle(75% at 50% 50%)', duration: 1.1, ease: 'expo.inOut' }, 0.65)
+				.to([bar, skip], { color: '#231f20', duration: 0.4 }, 0.95);
+
+			// ink the scene in
+			const build = 1.1;
+			tl.to($$('[data-ld-rings] circle'), { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut', stagger: 0.12 }, build)
+				.to($$('[data-ld-plinth]'), { strokeDashoffset: 0, duration: 0.9, ease: 'power2.inOut' }, build + 0.1)
+				.to(windowLayers, { autoAlpha: 1, duration: 0.5, stagger: 0.03 }, build + 0.25)
+				.to($$('[data-ld-pillar]'), { y: 0, autoAlpha: 1, duration: 0.9, ease: 'back.out(1.4)', stagger: 0.1 }, build + 0.2)
+				.to($$('[data-ld-wedge]'), { scale: 1, autoAlpha: 1, duration: 0.7, ease: 'back.out(1.8)', stagger: 0.1 }, build + 0.35)
+				.to($$('[data-ld-mountains] path'), { y: 0, duration: 0.9, ease: 'expo.out', stagger: 0.08 }, build + 0.35)
+				.to($$('[data-ld-clouds] > g'), { x: 0, duration: 1.4, ease: 'expo.out', stagger: 0.06 }, build + 0.3)
+				.to(chars, { yPercent: 0, duration: 0.8, ease: 'back.out(1.6)', stagger: 0.05 }, build + 0.45);
+
+			// once risen, the letters no longer need their masks — let them fly on impact
+			tl.set($$<HTMLElement>('.ld__tch'), { overflow: 'visible' }, build + 1.4);
+
+			// captions: each beat types a new line into the dialog box
+			const captions: string[] = JSON.parse(dialogText.dataset.captions ?? '[]');
+			const typeCaption = (i: number, at: number) => {
+				const text = captions[i] ?? '';
+				const typed = { n: 0 };
+				tl.to(
+					typed,
+					{
+						n: text.length,
+						duration: text.length * 0.04,
+						ease: 'none',
+						onStart: () => {
+							dialogText.textContent = '';
+						},
+						onUpdate: () => {
+							dialogText.textContent = text.slice(0, Math.round(typed.n));
+						},
+					},
+					at,
+				);
+			};
+
+			// ── 3 · "look up" — then the star falls, spinning, trailing ink
+			const look = build + 1.25;
+			tl.to(dialog, { autoAlpha: 1, scale: 1, rotation: 0, duration: 0.5, ease: 'back.out(2)' }, look);
+			typeCaption(0, look + 0.15);
+
+			const fall = look + 1.05;
+			tl.to(trail, { opacity: 1, duration: 0.15 }, fall)
+				.to(fallGroup, { x: 0, y: 0, duration: 0.8, ease: 'power2.in' }, fall)
+				.to(star, { rotation: 0, duration: 0.8, ease: 'power1.out' }, fall)
+				.to(shadow, { scale: 1, opacity: 0.32, duration: 0.8, ease: 'power2.in' }, fall);
+
+			// ── 4 · impact
+			const hit = fall + 0.8;
+			const dustEls = $$<SVGElement>('[data-ld-dust] circle');
+			tl.to(trail, { opacity: 0, duration: 0.12 }, hit)
+				.to(squash, { scaleX: 1.3, scaleY: 0.68, duration: 0.08, ease: 'power2.out' }, hit)
+				.to(squash, { scaleX: 0.9, scaleY: 1.12, y: -44, duration: 0.28, ease: 'power2.out' }, hit + 0.08)
+				.to(squash, { scaleX: 1, scaleY: 1, y: 0, duration: 0.6, ease: 'bounce.out' }, hit + 0.36)
+				.to(shadow, { scale: 0.7, duration: 0.28, ease: 'power2.out', yoyo: true, repeat: 1 }, hit + 0.08)
+				.to(stage, { keyframes: { x: [0, -16, 13, -9, 6, -3, 0], y: [0, 10, -8, 5, -3, 1, 0] }, duration: 0.5, ease: 'none' }, hit)
+				.to($$('[data-ld-cracks] path'), { strokeDashoffset: 0, duration: 0.32, ease: 'power3.out', stagger: 0.025 }, hit)
+				.to($$('[data-ld-ripples] ellipse'), { scale: 2.6, opacity: 0, duration: 1.2, ease: 'expo.out', stagger: 0.14 }, hit)
+				.fromTo(
+					dustEls,
+					{ scale: 0.2, x: 0, y: 0, opacity: 1 },
+					{
+						scale: () => gsap.utils.random(0.8, 1.3),
+						x: (_i: number, t: SVGElement) => Number(t.dataset.side) * gsap.utils.random(50, 170),
+						y: () => gsap.utils.random(-46, -6),
+						opacity: 0,
+						duration: 0.9,
+						ease: 'expo.out',
+					},
+					hit,
+				)
+				// the star lights up: rays bloom and turn, sparkles twinkle
+				.to(rays, { scale: 1, autoAlpha: 1, duration: 0.7, ease: 'back.out(2.2)' }, hit + 0.45)
+				.to(rays, { rotation: 30, duration: 2.6, ease: 'none' }, hit + 0.45)
+				.to(sparkles, { scale: 1, duration: 0.4, ease: 'back.out(3)', stagger: 0.12 }, hit + 0.55)
+				.to(sparkles, { scale: 0.6, duration: 0.35, ease: 'sine.inOut', yoyo: true, repeat: 3, stagger: 0.1 }, hit + 1.0);
+
+			// letters get knocked loose — the ones nearest the impact first
+			const mid = (chars.length - 1) / 2;
+			chars.forEach((c, i) => {
+				const at = hit + 0.04 + Math.abs(i - mid) * 0.035;
+				tl.to(c, { y: gsap.utils.random(-70, -26), rotation: gsap.utils.random(-16, 16), duration: 0.24, ease: 'power2.out' }, at).to(
+					c,
+					{ y: 0, rotation: 0, duration: 0.55, ease: 'bounce.out' },
+					at + 0.24,
+				);
+			});
+
+			typeCaption(1, hit + 0.2);
+			typeCaption(2, hit + 1.45);
+
+			// ── 5 · the star flares; the camera pushes in on it while its light
+			//        blooms until it fills the screen — then the light settles away
+			//        and the site is underneath. (The bloom lives outside the
+			//        loader so the loader can be dropped behind it.)
+			const exit = hit + 2.6;
+			let glow: HTMLDivElement | null = null;
+			const bloom = () => {
+				const m = scene.getScreenCTM();
+				const box = stage.getBoundingClientRect();
+				let x = window.innerWidth / 2;
+				let y = window.innerHeight / 2;
+				if (m) {
+					const pt = scene.createSVGPoint();
+					pt.x = STAR_C.x;
+					pt.y = STAR_C.y;
+					const sp = pt.matrixTransform(m);
+					x = sp.x;
+					y = sp.y;
+				}
+				gsap.set(stage, { transformOrigin: `${x - box.left}px ${y - box.top}px` });
+				glow = document.createElement('div');
+				glow.className = 'ld-bloom';
+				glow.style.left = `${x}px`;
+				glow.style.top = `${y}px`;
+				document.body.append(glow);
+				// solid core = 56% of the 50px radius → 28px per unit of scale; overshoot the farthest corner
+				const far = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+				const cover = (far * 1.15) / 28;
+				gsap.timeline()
+					.fromTo(glow, { scale: 0.2, opacity: 0 }, { scale: 1.6, opacity: 1, duration: 0.35, ease: 'power2.out' })
+					.to(glow, { scale: cover, duration: 0.95, ease: 'power3.in' });
+			};
+			const settle = () => {
+				// the screen is all light now: drop the loader behind it, start the site
+				gsap.set(el, { autoAlpha: 0 });
+				reveal();
+				if (glow) {
+					const g = glow;
+					gsap.to(g, { opacity: 0, duration: 0.9, ease: 'power2.out', onComplete: () => g.remove() });
+				}
+			};
+
+			tl.to(rays, { scale: 1.5, rotation: '+=40', duration: 0.6, ease: 'back.out(2.4)' }, exit)
+				.to(sparkles, { scale: 1.3, duration: 0.35, ease: 'back.out(3)' }, exit)
+				.to(dialog, { autoAlpha: 0, y: -10, duration: 0.35 }, exit)
+				.to([bar, skip], { autoAlpha: 0, duration: 0.35 }, exit)
+				.add(bloom, exit + 0.35)
+				// push in on the star as its light grows
+				.to(stage, { scale: 3.2, duration: 1.3, ease: 'power2.in' }, exit + 0.4)
+				.add(settle, exit + 1.65)
+				.to({}, { duration: 0.95 }, exit + 1.65);
+
+			// the real length of the show, plus slack
+			armFailsafe(tl.duration() / tl.timeScale() + 4);
+		});
+	};
+
+	run();
+	document.addEventListener('astro:page-load', run);
+</script>

@@ -1,0 +1,256 @@
+/*
+ * Ink theme — site-wide restyle after makemepulse's Nomadic Tribe (2019).
+ *
+ * Loaded after global.css. Instead of touching every component, it remaps the
+ * Tailwind palette the components already use (zinc → paper/ink scale,
+ * blue → slate, white → card paper) and then dresses the shared component
+ * classes in the illustrated language: 2px ink outlines, hard offset shadows,
+ * flat muted fills, paper grain, chunky uppercase display type.
+ */
+
+:root {
+	--ink: #231f20;
+	--paper: #f1ece3;
+	--card: #fbf7f0;
+	--slate: #686e87;
+	--pink: #e9a99a;
+	--teal: #8fb5b0;
+	--sun: #f4c64e;
+	--line: #231f20; /* outlines & hard shadows */
+	--on-card: #231f20; /* text on cards, chips, buttons */
+	--ink-shadow: 4px 4px 0 var(--line);
+	--ink-shadow-lg: 6px 6px 0 var(--line);
+
+	/* zinc → warm paper / ink scale */
+	--color-zinc-50: #f1ece3;
+	--color-zinc-100: #e9e2d5;
+	--color-zinc-200: #d9d0c0;
+	--color-zinc-300: #c2b8a6;
+	--color-zinc-400: #8f877a;
+	--color-zinc-500: #6b645b;
+	--color-zinc-600: #4f4943;
+	--color-zinc-700: #3a3532;
+	--color-zinc-800: #2b2726;
+	--color-zinc-900: #231f20;
+	--color-zinc-950: #1a1718;
+
+	/* blue (links, accents) → slate */
+	--color-blue-300: #b8bdd3;
+	--color-blue-400: #9aa0bb;
+	--color-blue-500: #686e87;
+	--color-blue-600: #4f5571;
+	--color-blue-700: #3f445c;
+
+	--color-white: #fbf7f0;
+}
+
+html.dark {
+	--ink: #f1ece3;
+	--paper: #2b2e3b;
+	--card: #3a3f50;
+	--line: #101117;
+	--on-card: #f1ece3;
+}
+
+/* ── Paper & grain ─────────────────────────────────────── */
+body {
+	background-color: var(--paper) !important;
+	color: var(--color-zinc-900);
+}
+
+html.dark body {
+	color: var(--paper);
+	color: #f1ece3;
+}
+
+body::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	z-index: 2147480000;
+	pointer-events: none;
+	opacity: 0.38;
+	mix-blend-mode: multiply;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .12 0 0 0 0 .12 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html.dark body::after {
+	mix-blend-mode: soft-light;
+	opacity: 0.5;
+}
+
+::selection {
+	background: var(--sun);
+	color: #231f20;
+}
+
+/* ── Display type ──────────────────────────────────────── */
+.ink-display {
+	font-family: 'Unbounded', 'Arial Black', sans-serif;
+	font-weight: 900;
+	text-transform: uppercase;
+	letter-spacing: 0.01em;
+	color: var(--slate);
+	-webkit-text-stroke: 0.06em #231f20;
+	paint-order: stroke fill;
+}
+
+main h1:not(.ink-keep),
+main h2:not(.ink-keep) {
+	letter-spacing: 0;
+}
+
+/* section / page titles take the chunky display face */
+main h2.text-xl,
+main header.section-enter h1 > .font-sans {
+	font-family: 'Unbounded', 'Arial Black', sans-serif;
+	font-weight: 900;
+	text-transform: uppercase;
+	color: var(--slate);
+	-webkit-text-stroke: 0.05em var(--line);
+	paint-order: stroke fill;
+}
+
+/* small section titles: solid ink, no outline (an outline muddies at this size) */
+main h2.text-xl {
+	color: var(--line);
+	-webkit-text-stroke: 0;
+	letter-spacing: 0.02em;
+}
+
+html.dark main h2.text-xl {
+	color: #f1ece3;
+}
+
+main header.section-enter h1 > .font-serif {
+	font-family: 'Instrument Serif', Georgia, serif;
+	color: var(--color-zinc-600);
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.site-header {
+	background: color-mix(in srgb, var(--paper) 88%, transparent) !important;
+	border-bottom: 2px solid var(--line) !important;
+	backdrop-filter: blur(6px) !important;
+}
+
+.header-toolbar-button,
+.icon-button {
+	border: 2px solid var(--line) !important;
+	background: var(--card) !important;
+	box-shadow: 2px 2px 0 var(--line) !important;
+	transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.header-toolbar-button:hover,
+.icon-button:hover {
+	transform: translate(-1px, -1px);
+	box-shadow: 3px 3px 0 var(--line) !important;
+}
+
+.header-toolbar-button:active,
+.icon-button:active {
+	transform: translate(2px, 2px);
+	box-shadow: 0 0 0 var(--line) !important;
+}
+
+/* ── Cards ─────────────────────────────────────────────── */
+.card-surface {
+	background: var(--card) !important;
+	border: 2px solid var(--line) !important;
+	border-radius: 14px !important;
+	box-shadow: var(--ink-shadow) !important;
+	transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s !important;
+}
+
+.card-interactive:hover {
+	transform: translate(-3px, -3px) rotate(-0.4deg) !important;
+	box-shadow: 8px 8px 0 var(--line) !important;
+}
+
+/* the soft blue spotlight doesn't belong in an inked world */
+.card-spotlight::before,
+.card-spotlight::after {
+	display: none !important;
+}
+
+/* chips, pills, small buttons */
+.apple-float-chip,
+.apple-meta-pill {
+	border: 2px solid var(--line) !important;
+	background: var(--card) !important;
+	color: var(--on-card) !important;
+	box-shadow: 2px 2px 0 var(--line) !important;
+	backdrop-filter: none !important;
+	border-radius: 999px !important;
+}
+
+.apple-float-chip::before,
+.apple-meta-pill::before {
+	display: none !important;
+}
+
+.apple-float-chip:hover,
+.apple-meta-pill:hover {
+	background: var(--sun) !important;
+	color: #231f20 !important;
+	transform: translate(-1px, -1px) !important;
+	box-shadow: 3px 3px 0 var(--line) !important;
+}
+
+/* generic bordered rounded boxes (terminal card, panels) */
+main .rounded-2xl.border,
+main [class*='rounded-[1.6rem]'].border {
+	border: 2px solid var(--line) !important;
+	background: var(--card) !important;
+	box-shadow: var(--ink-shadow-lg) !important;
+	backdrop-filter: none !important;
+}
+
+/* ── Links ─────────────────────────────────────────────── */
+main a:not([class]) ,
+.markdown-prose a {
+	color: #231f20;
+	text-decoration: underline;
+	text-decoration-color: var(--pink);
+	text-decoration-thickness: 3px;
+	text-underline-offset: 3px;
+}
+
+html.dark main a:not([class]),
+html.dark .markdown-prose a {
+	color: #f1ece3;
+}
+
+/* ── Decorations from the old theme ────────────────────── */
+/* marble columns & meteors read as a different world — retire them */
+.parthenon-grp,
+.meteor-layer {
+	display: none !important;
+}
+
+/* gold dot ribbon → inked hatch band */
+.dots-band {
+	height: 22px !important;
+	border-block: 2px solid var(--line);
+	background:
+		repeating-linear-gradient(45deg, var(--line) 0 2px, transparent 2px 9px),
+		var(--pink);
+	border-radius: 0 !important;
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
+}
+
+.dots-band canvas {
+	display: none !important;
+}
+
+/* ── Footer ────────────────────────────────────────────── */
+footer {
+	border-top: 2px solid var(--line) !important;
+}
+
+/* ── Inked scrollbar ───────────────────────────────────── */
+html {
+	scrollbar-color: var(--slate) var(--paper);
+}

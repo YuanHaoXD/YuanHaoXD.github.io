@@ -1,0 +1,331 @@
+---
+/*
+ * Page transition — "blinds + destination title", inked in the same
+ * Nomadic-Tribe-style palette as the entrance (slate / cream / ink / pink).
+ *
+ * On `astro:before-preparation` six ink columns rise in a stagger, then the
+ * destination's name rises letter by letter in a large italic serif with its
+ * section index, path and a drawn gold rule. The next page is fetched in
+ * parallel. On `astro:page-load` the type exits upward and the columns
+ * retract top-down, while the new <main> eases up into place.
+ *
+ * `transition:persist` keeps this node alive across swaps so the cover never
+ * blinks out mid-navigation.
+ */
+const COLS = 6;
+---
+
+<div class="pt" data-curtain aria-hidden="true" transition:persist="yh-curtain">
+	<div class="pt__cols">
+		{Array.from({ length: COLS }, () => <i data-pt-col />)}
+	</div>
+	<div class="pt__big" data-pt-big>01</div>
+	<div class="pt__stage">
+		<div class="pt__meta">
+			<span class="pt__mask"><span data-pt-meta data-pt-index>(01)</span></span>
+			<span class="pt__mask"><span data-pt-meta>Now entering</span></span>
+			<span class="pt__mask"><span data-pt-meta data-pt-path>/</span></span>
+		</div>
+		<div class="pt__title" data-pt-title>Home</div>
+		<div class="pt__sub">
+			<span class="pt__rule"><i data-pt-rule></i></span>
+			<span class="pt__mask"><span data-pt-meta data-pt-zh>首页</span></span>
+		</div>
+	</div>
+</div>
+
+<style is:global>
+	/* The curtain owns every in-site navigation. Astro's native view-transition
+	   layer paints in the top layer (above any z-index), so silence it or the
+	   incoming page bleeds through the blinds. */
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+	}
+
+	/* Named elements are snapshotted into their own top-layer groups, which paint
+	   above the curtain for a frame mid-swap (the old hero flashed through).
+	   Only the root snapshot may exist — it already contains the curtain. */
+	[data-astro-transition-scope] {
+		view-transition-name: none !important;
+	}
+
+	.pt {
+		--pt-col: #686e87;
+		--pt-line: #231f20;
+		--pt-ink: #f1ece3;
+		--pt-mute: rgba(241, 236, 227, 0.7);
+		--pt-gold: #e9a99a;
+		position: fixed;
+		inset: 0;
+		z-index: 2147482000;
+		pointer-events: none;
+		visibility: hidden;
+	}
+
+	.pt.is-active {
+		visibility: visible;
+		pointer-events: auto;
+	}
+
+	.pt__cols {
+		position: absolute;
+		inset: 0;
+		display: flex;
+	}
+
+	.pt__cols i {
+		flex: 1;
+		/* 1px overlap kills hairline seams between columns */
+		margin-right: -1px;
+		/* paper grain lives on the blinds themselves, never over the page */
+		background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .12 0 0 0 0 .12 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+			var(--pt-col);
+		background-blend-mode: multiply;
+		border-right: 2px solid var(--pt-line);
+		transform: scaleY(0);
+		transform-origin: bottom;
+		will-change: transform;
+	}
+
+	.pt__stage {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 0 clamp(20px, 6vw, 96px);
+		color: var(--pt-ink);
+	}
+
+	.pt__mask {
+		display: inline-block;
+		overflow: hidden;
+		vertical-align: bottom;
+	}
+
+	.pt__mask > span {
+		display: inline-block;
+	}
+
+	.pt__meta {
+		display: flex;
+		gap: clamp(12px, 3vw, 40px);
+		font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--pt-mute);
+	}
+
+	.pt__meta [data-pt-index] {
+		color: var(--pt-ink);
+		background: var(--pt-line);
+		padding: 0 0.4em;
+	}
+
+	.pt__title {
+		margin: 0.18em 0 0.12em -0.03em;
+		font-family: 'Unbounded', 'Arial Black', sans-serif;
+		font-weight: 900;
+		font-size: clamp(48px, 11vw, 176px);
+		line-height: 0.95;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		-webkit-text-stroke: clamp(3px, 0.5vw, 8px) var(--pt-line);
+		paint-order: stroke fill;
+		white-space: nowrap;
+	}
+
+	/* Generous mask padding: italic serif caps and descenders overshoot the box. */
+	.pt__title .pt__ch-mask {
+		display: inline-block;
+		overflow: hidden;
+		padding: 0.14em 0.1em 0.26em 0;
+		margin: -0.14em -0.1em -0.26em 0;
+		vertical-align: top;
+	}
+
+	.pt__big {
+		position: absolute;
+		right: clamp(12px, 3vw, 48px);
+		bottom: -0.1em;
+		font-family: 'Unbounded', 'Arial Black', sans-serif;
+		font-weight: 900;
+		font-size: clamp(180px, 36vw, 600px);
+		line-height: 0.8;
+		letter-spacing: -0.02em;
+		color: transparent;
+		-webkit-text-stroke: 2px var(--pt-line);
+		opacity: 0.35;
+		pointer-events: none;
+		will-change: transform;
+	}
+
+	.pt__title .pt__ch {
+		display: inline-block;
+		will-change: transform;
+	}
+
+	.pt__sub {
+		display: flex;
+		align-items: center;
+		gap: 18px;
+		font-family: 'Noto Serif SC', 'Songti SC', serif;
+		font-size: clamp(14px, 1.6vw, 18px);
+		letter-spacing: 0.3em;
+		color: var(--pt-ink);
+	}
+
+	.pt__rule {
+		position: relative;
+		width: clamp(60px, 12vw, 180px);
+		height: 5px;
+	}
+
+	.pt__rule i {
+		position: absolute;
+		inset: 0;
+		border-top: 1.5px solid var(--pt-line);
+		border-bottom: 1.5px solid var(--pt-line);
+		background: var(--pt-gold);
+		transform: scaleX(0);
+		transform-origin: left;
+	}
+</style>
+
+<script>
+	import { gsap } from 'gsap';
+
+	type Dest = { index: string; title: string; zh: string };
+
+	// Numbering follows the nav (Home · Blog · About); everything under the blog
+	// (posts, archive, tags) shares Blog's number.
+	const ROUTES: Array<[RegExp, Dest]> = [
+		[/^\/$/, { index: '01', title: 'Home', zh: '首页' }],
+		[/^\/blog\/(page\/\d+\/)?$/, { index: '02', title: 'Writing', zh: '写作' }],
+		[/^\/blog\/archive\/$/, { index: '02', title: 'Archive', zh: '归档' }],
+		[/^\/blog\/important\/$/, { index: '02', title: 'Featured', zh: '精选' }],
+		[/^\/blog\/.+/, { index: '02', title: 'Reading', zh: '阅读' }],
+		[/^\/tags\/$/, { index: '02', title: 'Tags', zh: '标签' }],
+		[/^\/tags\/.+/, { index: '02', title: 'Tagged', zh: '标签' }],
+		[/^\/about\//, { index: '03', title: 'About', zh: '关于' }],
+		[/^\/links\//, { index: '03', title: 'Links', zh: '友链' }],
+	];
+
+	const destFor = (url: URL): Dest => {
+		const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+		const path = url.pathname.replace(base, '') || '/';
+		return ROUTES.find(([re]) => re.test(path))?.[1] ?? { index: '00', title: 'Elsewhere', zh: '页面' };
+	};
+
+	const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	const els = () => {
+		const root = document.querySelector<HTMLElement>('[data-curtain]');
+		if (!root) return null;
+		return {
+			root,
+			cols: [...root.querySelectorAll<HTMLElement>('[data-pt-col]')],
+			title: root.querySelector<HTMLElement>('[data-pt-title]')!,
+			metas: [...root.querySelectorAll<HTMLElement>('[data-pt-meta]')],
+			index: root.querySelector<HTMLElement>('[data-pt-index]')!,
+			path: root.querySelector<HTMLElement>('[data-pt-path]')!,
+			zh: root.querySelector<HTMLElement>('[data-pt-zh]')!,
+			rule: root.querySelector<HTMLElement>('[data-pt-rule]')!,
+			big: root.querySelector<HTMLElement>('[data-pt-big]')!,
+			stage: root.querySelector<HTMLElement>('.pt__stage')!,
+		};
+	};
+
+	const setTitle = (titleEl: HTMLElement, text: string) => {
+		titleEl.replaceChildren(
+			...[...text].map((c) => {
+				const mask = document.createElement('span');
+				mask.className = 'pt__ch-mask';
+				const ch = document.createElement('span');
+				ch.className = 'pt__ch';
+				ch.textContent = c;
+				mask.append(ch);
+				return mask;
+			}),
+		);
+		return [...titleEl.querySelectorAll<HTMLElement>('.pt__ch')];
+	};
+
+	let active: gsap.core.Timeline | null = null;
+
+	const cover = (to: URL) =>
+		new Promise<void>((resolve) => {
+			const e = els();
+			if (!e) return resolve();
+			const dest = destFor(to);
+			e.index.textContent = `(${dest.index})`;
+			e.path.textContent = to.pathname;
+			e.zh.textContent = dest.zh;
+			e.big.textContent = dest.index;
+			const chars = setTitle(e.title, dest.title);
+
+			active?.kill();
+			e.root.classList.add('is-active');
+			gsap.set(e.cols, { scaleY: 0, transformOrigin: 'bottom' });
+			// type stays hidden until the blinds are up (the padded masks would
+			// otherwise let glyph tops peek over the page)
+			gsap.set(e.stage, { autoAlpha: 0 });
+			gsap.set(chars, { yPercent: 160, rotate: 8 });
+			gsap.set(e.metas, { yPercent: 110 });
+			gsap.set(e.rule, { scaleX: 0, transformOrigin: 'left' });
+			gsap.set(e.big, { yPercent: 40, autoAlpha: 0 });
+
+			active = gsap
+				.timeline({ defaults: { ease: 'expo.out' } })
+				.to(e.cols, { scaleY: 1, duration: 0.5, ease: 'expo.inOut', stagger: 0.04 }, 0)
+				.set(e.stage, { autoAlpha: 1 }, 0.34)
+				.add(resolve, 0.72)
+				.to(e.metas, { yPercent: 0, duration: 0.7, stagger: 0.05 }, 0.36)
+				.to(chars, { yPercent: 0, rotate: 0, duration: 0.8, stagger: 0.03 }, 0.38)
+				.to(e.rule, { scaleX: 1, duration: 0.8, ease: 'expo.inOut' }, 0.45)
+				.to(e.big, { yPercent: 0, autoAlpha: 1, duration: 1, ease: 'expo.out' }, 0.5);
+		});
+
+	const uncover = () => {
+		const e = els();
+		if (!e || !e.root.classList.contains('is-active')) return;
+		const chars = [...e.title.querySelectorAll<HTMLElement>('.pt__ch')];
+		const main = document.querySelector('main');
+
+		// Keep the destination title on screen long enough to read, even when
+		// the fetch is instant.
+		const READ_UNTIL = 1.15;
+		const hold = active ? Math.max(0.05, READ_UNTIL - active.time()) : 0.05;
+		active?.kill();
+
+		active = gsap
+			.timeline({ delay: hold, defaults: { ease: 'expo.in' }, onComplete: () => e.root.classList.remove('is-active') })
+			.to(chars, { yPercent: -160, rotate: -4, duration: 0.55, stagger: 0.025 }, 0)
+			.set(e.stage, { autoAlpha: 0 }, 0.6)
+			.to(e.metas, { yPercent: -110, duration: 0.5, stagger: 0.03 }, 0)
+			.to(e.rule, { scaleX: 0, transformOrigin: 'right', duration: 0.5, ease: 'expo.inOut' }, 0)
+			.to(e.big, { yPercent: -30, autoAlpha: 0, duration: 0.7, ease: 'expo.in' }, 0)
+			.to(e.cols, { scaleY: 0, transformOrigin: 'top', duration: 0.6, ease: 'expo.inOut', stagger: 0.04 }, 0.25);
+
+		if (main) {
+			active.fromTo(main, { y: 60, autoAlpha: 0.001 }, { y: 0, autoAlpha: 1, duration: 0.9, ease: 'expo.out', clearProps: 'transform,opacity,visibility' }, 0.4);
+		}
+	};
+
+	document.addEventListener('astro:before-preparation', (event: any) => {
+		if (reduced()) return;
+		const originalLoader = event.loader;
+		const to: URL = event.to;
+		event.loader = async () => {
+			// Fetch while the blinds close. The timeout guarantees navigation never
+			// hangs if frames are throttled (e.g. background tab).
+			const closed = Promise.race([cover(to), new Promise<void>((r) => setTimeout(r, 1200))]);
+			await Promise.all([closed, originalLoader()]);
+		};
+	});
+
+	document.addEventListener('astro:page-load', uncover);
+</script>

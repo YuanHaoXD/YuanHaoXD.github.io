@@ -3,7 +3,17 @@
  * Shared document head for every route.
  * Centralizing this keeps metadata/base-path behavior consistent across environments.
  */
+// Self-hosted Latin faces (Google Fonts is unreachable from mainland China).
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/instrument-serif/400.css';
+import '@fontsource/instrument-serif/400-italic.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/unbounded/900.css';
 import '../styles/global.css';
+import '../styles/ink-theme.css';
 import { ClientRouter } from 'astro:transitions';
 import type { ImageMetadata } from 'astro';
 import { SITE_TITLE } from '../consts';
@@ -48,9 +58,6 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 />
 <meta name="generator" content={Astro.generator} />
 
-<!-- Font preconnect -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <style is:inline>
 	{`
 		@font-face {
@@ -69,19 +76,6 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 		}
 	`}
 </style>
-<!-- UI/body fonts prioritize immediate paint to reduce perceived loading delay. -->
-<link
-	rel="stylesheet"
-	href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;600&display=swap"
-/>
-<!-- Brand wordmark face, subset to the exact glyphs of "YuanHao Blog" (~few KB). -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&text=YuanHao%20Blog%E2%80%99&display=swap">
-<!-- Code font is optional to avoid post-paint metric swaps on large code blocks. -->
-<link
-	rel="stylesheet"
-	href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=optional"
-/>
-
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
 
@@ -130,21 +124,13 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 			if (meta) meta.setAttribute('content', isDark ? '#09090b' : '#fafafa');
 		};
 		window.__syncThemeColor(theme === 'dark');
-	})();
-</script>
-<script is:inline>
-	(function() {
-		window.__formatCompactViewCount = function(count) {
-			var v = Number(count);
-			if (!Number.isFinite(v) || v < 0) return '0';
-			if (v >= 1000) return (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k';
-			return v.toLocaleString('en-US');
-		};
-		window.__formatFullViewCount = function(count) {
-			var v = Number(count);
-			if (!Number.isFinite(v) || v < 0) return '0 views';
-			return v.toLocaleString('en-US') + ' ' + (v === 1 ? 'view' : 'views');
-		};
+
+		// Every hard load opens with the loader (see Splash.astro); in-site
+		// navigation uses the page curtain instead.
+		if (!window.__yhBooted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			root.classList.add('is-splashing');
+		}
+		window.__yhBooted = true;
 	})();
 </script>
 <script is:inline>

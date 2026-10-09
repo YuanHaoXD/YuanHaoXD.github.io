@@ -170,7 +170,7 @@ const currentView = isImportant ? 'important' : isArchive ? 'archive' : 'latest'
 								<ul class="grid gap-4">
 									{displayPosts.map((post, idx) => (
 										<li class="relative" data-reveal style={`--reveal-delay: ${Math.min(idx * 60, 180)}ms`}>
-											<PostCard post={post} base={BASE} maxMobile={3} maxDesktop={null} reloadOnNavigate={true} />
+											<PostCard post={post} base={BASE} maxMobile={3} maxDesktop={null} reloadOnNavigate={false} />
 										</li>
 									))}
 								</ul>
@@ -191,7 +191,7 @@ const currentView = isImportant ? 'important' : isArchive ? 'archive' : 'latest'
 							<ul class="grid gap-4">
 								{displayPosts.map((post, idx) => (
 									<li class="relative" data-reveal style={`--reveal-delay: ${Math.min(idx * 60, 180)}ms`}>
-										<PostCard post={post} base={BASE} maxMobile={3} maxDesktop={null} reloadOnNavigate={true} />
+										<PostCard post={post} base={BASE} maxMobile={3} maxDesktop={null} reloadOnNavigate={false} />
 									</li>
 								))}
 							</ul>
