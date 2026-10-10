@@ -1,322 +1,885 @@
 ---
-import { getCollection } from 'astro:content';
+/*
+ * About — an academic homepage (after llijiang.github.io: profile, biography,
+ * publications, experience, honors) dressed in the site's ink style.
+ * It is the site root: visitors land here. The illustrated home lives at
+ * /home/, and /about/ redirects here.
+ *
+ * Everything here comes from the CV. Deliberately left out of this public
+ * page: phone number, certificate numbers. The email is written out
+ * "[at] / [dot]" style so scrapers don't pick it up.
+ *
+ * Layout is plain flow / grid only (no absolute positioning), so nothing can
+ * sit on top of anything else at any width.
+ */
 import BaseHead from '../components/BaseHead.astro';
-import Hero from '../components/Hero.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
-import MeteorShower from '../components/MeteorShower.astro';
 import MobileDrawer from '../components/MobileDrawer.astro';
-import ParthenonColumns from '../components/ParthenonColumns.astro';
-import PostCard from '../components/PostCard.astro';
-import TerminalQuote from '../components/TerminalQuote.astro';
-import { BILIBILI_URL, CREATINF_URL, GITHUB_URL, SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import MusicPlayer from '../components/MusicPlayer.astro';
 
 const BASE = import.meta.env.BASE_URL;
-// Keep home preview aligned with list pagination size for consistent editorial cadence.
-const posts = (await getCollection('blog'))
-	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-	.slice(0, 6);
 
+const ME = 'Yuanhao Wang';
+
+const interests = [
+	{ label: 'World Action Models', tone: 'sun' },
+	{ label: 'Embodied AI', tone: 'teal' },
+	{ label: 'Multimodal Learning', tone: 'pink' },
+	{ label: 'Vision-Language-Action (VLA) Models', tone: 'slate' },
+	{ label: 'Diffusion Models', tone: 'pink' },
+	{ label: 'Visual Tokenization', tone: 'slate' },
+];
+
+const publications = [
+	{
+		venue: 'Neurocomputing',
+		year: '2025',
+		note: 'SCI Q2',
+		tone: 'pink',
+		image: 'image/pubs/unicom.webp',
+		links: [{ label: 'Paper', href: 'https://www.sciencedirect.com/science/article/pii/S0925231225018016' }],
+		title: 'UNICOM: Unified, Foreground-Aware, and Context-Realistic Deep Image Composition with Diffusion Model',
+		authors: ['Lu Yang*', 'Yuanhao Wang*', 'Yicheng Liu', 'Enze Wang', 'Ziyang Zhao', 'Yanqi He', 'Zexian Song', 'Hao Lu'],
+		where: 'Neurocomputing, 2025.',
+		tags: ['Co-first author'],
+		summary:
+			'A mask-free image composition framework that unifies object placement, appearance harmonization and shadow generation in a single end-to-end diffusion model.',
+	},
+	{
+		venue: 'ACM MM',
+		year: '2026',
+		note: 'Oral',
+		tone: 'teal',
+		image: 'image/pubs/tokbench.webp',
+		links: [
+			{ label: 'Paper', href: 'https://arxiv.org/abs/2505.18142' },
+			{ label: 'Project', href: 'https://wjf5203.github.io/TokBench' },
+			{ label: 'Dataset', href: 'https://huggingface.co/datasets/Junfeng5/TokBench' },
+		],
+		title: 'TokBench: Evaluating Your Visual Tokenizer before Visual Generation',
+		authors: ['Junfeng Wu*', 'Dongliang Luo*', 'Weizhi Zhao', 'Zhihao Xie', 'Yuanhao Wang', 'Junyi Li', 'Xudong Xie', 'Yuliang Liu', 'Xiang Bai'],
+		where: 'ACM International Conference on Multimedia (ACM MM), 2026.',
+		tags: ['Oral Presentation'],
+		summary: 'A benchmark for how faithfully visual tokenizers reconstruct images before they are used for visual generation.',
+	},
+];
+
+const experience = [
+	{
+		org: 'Huawei — Lianqiuhu R&D Center',
+		place: 'Shanghai, China',
+		date: 'Jun 2026 – Sep 2026',
+		role: 'AI Large Model Intern',
+		topic: 'Omni-modal full-duplex end-to-end models · Vision-Language-Action (VLA)',
+		points: [
+			'Researched omni-modal full-duplex end-to-end models that move beyond turn-based interaction toward real-time, human-like engagement.',
+			'Studied foundational VLA works (e.g. OpenVLA, π0); deployed OpenVLA and ran fine-tuning experiments on the LIBERO benchmark.',
+		],
+	},
+	{
+		org: 'Huazhong University of Science and Technology',
+		place: 'Wuhan, China',
+		date: 'Mar 2025 – Jul 2025',
+		role: 'Research Assistant',
+		topic: 'Visual tokenizer reconstruction accuracy (TokBench, ACM MM 2026 Oral)',
+		points: [
+			'Designed comparison protocols across tokenizer architectures with PhD researchers.',
+			'Produced the statistical charts, accuracy distributions and multi-scale comparison figures; wrote the experimental data section of the paper.',
+			'Follow-up work extends the evaluation framework to video tokenization.',
+		],
+	},
+	{
+		org: 'UNICOM — Image Composition with Diffusion',
+		place: 'HUST',
+		date: 'Jul 2024 – Jun 2025',
+		role: 'Co-First Author',
+		topic: 'Mask-free, foreground-aware image composition (Neurocomputing)',
+		points: [
+			'Designed the Background Prompt module and the Space Mapping module; a Meta-Net injects background context into prompt tokens for adaptive foreground-pose alignment.',
+			'Built a self-supervised training scheme on the OpenImages segmentation dataset (80,000 training triplets).',
+			'Reached state-of-the-art FID and OPScore among contemporary methods while staying competitive on all other metrics.',
+		],
+	},
+];
+
+const projects = [
+	{
+		name: 'StreetShow: Virtual Try-On for Street Photography',
+		date: 'Mar 2025 – Apr 2026',
+		role: 'Project Leader · University Student Innovation Program',
+		link: { label: 'GitHub', href: 'https://github.com/YuanHaoXD/StreetShow' },
+		text: 'Led a team building a custom street-photography dataset, training virtual try-on models and developing background replacement and relighting modules; implemented the try-on pipeline on an agent framework (garment fitting, background generation, relighting).',
+	},
+	{
+		name: 'Web-Supervised Fine-Grained Recognition',
+		date: 'Dec 2025',
+		role: 'Global Campus AI Algorithm Competition · National 2nd Prize · Team of 3',
+		text: 'Tackled label noise, data bias and long-tail distribution in web-crawled training data: a prompt-based filtering pipeline with multimodal LLMs removed low-quality and mislabeled images, and API-Net modeled fine-grained inter-subclass differences.',
+	},
+];
+
+const honors = [
+	{ name: 'National 2nd Prize — Global Campus AI Algorithm Competition', year: '2025' },
+	{ name: '1st Prize — HUST Cup, School of AI (Team Award)', year: '2024' },
+	{ name: 'Class Academic Excellence Scholarship', year: '' },
+	{ name: 'Class Sports & Culture Excellence Scholarship', year: '' },
+];
+
+const skills = [
+	['Languages', 'Chinese (native) · English (CET-6 549, IELTS 6.5)'],
+	['Programming', 'C · C++ · Python · JavaScript'],
+	['Tools', 'PyTorch · Git · Linux · LaTeX'],
+	['Outside work', 'Football · Fitness · Reading'],
+];
+
+const personLd = {
+	'@context': 'https://schema.org',
+	'@type': 'Person',
+	name: 'Yuanhao Wang',
+	alternateName: 'YuanHao',
+	url: new URL(BASE, Astro.site).href,
+	image: new URL(`${BASE}img/avatar.jpg`, Astro.site).href,
+	jobTitle: 'Undergraduate Student',
+	affiliation: {
+		'@type': 'CollegeOrUniversity',
+		name: 'Huazhong University of Science and Technology',
+		alternateName: 'HUST',
+	},
+	knowsAbout: interests.map((i) => i.label),
+	sameAs: ['https://github.com/YuanHaoXD'],
+};
+
+const sections = ['Biography', 'Publications', 'Experience', 'Projects', 'Honors & Awards', 'Skills'];
+const no = (name: string) => String(sections.indexOf(name) + 1).padStart(2, '0');
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`${SITE_TITLE} - Research, Engineering & Technical Notes`} description="A personal blog about research, engineering workflows, and reproducible long-form writing.涵盖编程、技术笔记和工程实践。" />
+		<!-- Search-result title / snippet: "Name - Affiliation", then a first-person line -->
+		<BaseHead
+			title="Yuanhao Wang - HUST"
+			description="Hi, I'm Yuanhao Wang, an undergraduate in Artificial Intelligence at Huazhong University of Science and Technology (HUST). My research interests include world action models, embodied AI, multimodal learning, vision-language-action models and diffusion models."
+		/>
+		<!-- Structured data: tells search engines this page is a person's homepage -->
+		<script type="application/ld+json" set:html={JSON.stringify(personLd)} />
 	</head>
 	<body>
-		<ParthenonColumns />
-		<MeteorShower density={0.45} heightVh={46} />
 		<Header />
 		<MobileDrawer />
 		<main class="page-shell page-fade-in py-10 md:py-14" transition:name="page-main" transition:animate="fade">
-			<div class="space-y-6">
-				<Hero />
-
-				<section id="home-intro" class="section-enter section-enter-delay-1 scroll-mt-24 grid grid-cols-1 gap-6 items-start md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-					<div class="hero-enter hero-enter-delay-2 max-w-[40rem]">
-						<p class="max-w-xl font-serif text-[17px] leading-8 text-zinc-600 dark:text-zinc-300">
-							你好，我是 YuanHao。这里记录我的技术笔记、项目经验和想法。
+			<div class="ab mx-auto max-w-4xl">
+				<!-- ── profile ─────────────────────────────── -->
+				<header class="ab-profile section-enter">
+					<div class="ab-profile__photo">
+						<img src={`${BASE}img/avatar.jpg`} alt="Yuanhao Wang" width="460" height="460" loading="eager" decoding="async" />
+					</div>
+					<div class="ab-profile__text">
+						<p class="ab-eyebrow">About · 关于</p>
+						<h1 class="ab-name" transition:name="page-title" transition:animate="fade">
+							<span class="font-sans">{ME}</span>
+						</h1>
+						<p class="ab-role">Undergraduate · B.Eng. in Artificial Intelligence</p>
+						<p class="ab-aff">
+							School of AI and Automation<br />
+							Huazhong University of Science and Technology (HUST)<br />
+							Wuhan, China
 						</p>
-						<div class="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
-							<span class="apple-meta-pill">
-								<span class="apple-meta-pill-label">Research</span>
-							</span>
-							<span class="apple-meta-pill">
-								<span class="apple-meta-pill-label">Engineering</span>
-							</span>
-							<span class="apple-meta-pill">
-								<span class="apple-meta-pill-label">Notes</span>
-							</span>
-						</div>
-						<div class="mt-3.5 flex flex-wrap gap-2.5">
-							<span class="inline-flex items-center rounded-full border border-zinc-200/85 bg-white/78 px-3 py-1.5 text-[11px] font-medium tracking-[0.01em] text-zinc-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)] backdrop-blur-sm dark:border-zinc-700/80 dark:bg-zinc-900/72 dark:text-zinc-300">
-								UI: English
-							</span>
-							<span class="inline-flex items-center rounded-full border border-zinc-200/85 bg-white/78 px-3 py-1.5 text-[11px] font-medium tracking-[0.01em] text-zinc-600 shadow-[0_8px_20px_rgba(15,23,42,0.04)] backdrop-blur-sm dark:border-zinc-700/80 dark:bg-zinc-900/72 dark:text-zinc-300">
-								Content: Chinese (long-form)
-							</span>
-						</div>
-						<div class="mt-3.5 flex items-center gap-2">
-							<a
-								href={GITHUB_URL}
-								target="_blank"
-								rel="noreferrer"
-								class="icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-100"
-								aria-label="GitHub"
-							>
-								<svg viewBox="0 0 24 24" class="h-5 w-5 fill-current" aria-hidden="true">
-									<path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.523 2 12 2z" />
-								</svg>
-								<span class="sr-only">GitHub</span>
+						<p class="ab-contact">
+							<span class="ab-contact__k">Email</span>
+							<span>yhwang7 [at] hust [dot] edu [dot] cn</span>
+						</p>
+						<div class="ab-links">
+							<a class="ab-chip" href="https://github.com/YuanHaoXD" target="_blank" rel="noreferrer">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"></path></svg>
+								GitHub
 							</a>
-							<a
-								href={BILIBILI_URL}
-								target="_blank"
-								rel="noreferrer"
-								class="icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-100"
-								aria-label="Bilibili"
-							>
-								<svg viewBox="0 0 24 24" class="h-5 w-5 fill-current" aria-hidden="true">
-									<path d="M7.4 2.8a1 1 0 0 1 1.4 0L12 6l3.2-3.2a1 1 0 1 1 1.4 1.4L14.5 6.3h3.8A3.7 3.7 0 0 1 22 10v8.3A3.7 3.7 0 0 1 18.3 22H5.7A3.7 3.7 0 0 1 2 18.3V10a3.7 3.7 0 0 1 3.7-3.7h3.8L7.4 4.2a1 1 0 0 1 0-1.4ZM5.7 8.3A1.7 1.7 0 0 0 4 10v8.3c0 .9.8 1.7 1.7 1.7h12.6c.9 0 1.7-.8 1.7-1.7V10c0-.9-.8-1.7-1.7-1.7H5.7Zm1.8 3a1 1 0 0 1 1 1v3.4a1 1 0 1 1-2 0v-3.4a1 1 0 0 1 1-1Zm9 0a1 1 0 0 1 1 1v3.4a1 1 0 1 1-2 0v-3.4a1 1 0 0 1 1-1Z" />
-								</svg>
-								<span class="sr-only">Bilibili</span>
-							</a>
-							<a
-								href={CREATINF_URL}
-								target="_blank"
-								rel="noreferrer"
-								class="icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-100"
-								aria-label="CreatInf"
-							>
-								<span class="text-lg font-semibold leading-none">∞</span>
-								<span class="sr-only">CreatInf</span>
+							<a class="ab-chip" href={`${BASE}blog/`}>
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 19.5V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2Zm0 0A2 2 0 0 0 6 22h12M8 7h6"></path></svg>
+								Blog
 							</a>
 						</div>
 					</div>
+				</header>
 
-					<div class="hero-enter hero-enter-delay-2 w-full max-w-sm justify-self-end md:self-start">
-						<TerminalQuote />
+				<!-- ── 01 biography ───────────────────────── -->
+				<section class="ab-sec" data-reveal>
+					<h2 class="ab-h"><span class="ab-h__no">{no('Biography')}</span>Biography</h2>
+					<div class="ab-bio">
+						<p>
+							I am an undergraduate student in <strong>Artificial Intelligence</strong> at the School of AI and Automation,
+							<strong>Huazhong University of Science and Technology (HUST)</strong>, Class of 2027, currently preparing for
+							graduate study.
+						</p>
+						<p>
+							I have worked on diffusion-based image composition (<em>UNICOM</em>, Neurocomputing, co-first author) and on
+							evaluating visual tokenizers (<em>TokBench</em>, ACM MM 2026 Oral). From June to September 2026 I interned at
+							Huawei's Lianqiuhu R&amp;D Center as an AI large-model intern, working on omni-modal full-duplex models and
+							Vision-Language-Action models.
+						</p>
+						<p>
+							My latest interest is <strong>world action models</strong> and the broader exploration of
+							<strong>embodied AI</strong> — models that understand the world well enough to act in it.
+						</p>
 					</div>
+					<p class="ab-sub">Research interests</p>
+					<ul class="ab-interests">
+						{interests.map((it) => <li class={`ab-tag ab-tag--${it.tone}`}>{it.label}</li>)}
+					</ul>
 				</section>
 
-				<!-- Decorative pop-art ribbon spanning the full hero row width. -->
-				<section class="hero-enter hero-enter-delay-2 -mt-1" aria-hidden="true">
-					<div class="dots-band" data-dots-band>
-						<canvas></canvas>
-					</div>
+				<!-- ── 02 publications ────────────────────── -->
+				<section class="ab-sec" data-reveal>
+					<h2 class="ab-h"><span class="ab-h__no">{no('Publications')}</span>Publications</h2>
+					<p class="ab-note">* indicates equal contribution.</p>
+					<ol class="ab-pubs">
+						{
+							publications.map((p) => (
+								<li class="ab-pub">
+									<figure class="ab-pub__page">
+										<img
+											src={`${BASE}${p.image}`}
+											alt={`First page of ${p.title.split(':')[0]}`}
+											width="720"
+											height="940"
+											loading="lazy"
+											decoding="async"
+										/>
+									</figure>
+									<div class="ab-pub__body">
+										<p class="ab-pub__venue">
+											<i class={`ab-pub__dot ab-tone--${p.tone}`} aria-hidden="true" />
+											<span>{p.venue}</span>
+											<span class="ab-pub__sep">·</span>
+											<span>{p.year}</span>
+											<span class="ab-pub__sep">·</span>
+											<span>{p.note}</span>
+										</p>
+										<h3 class="ab-pub__title">{p.title}</h3>
+										<p class="ab-pub__authors">
+											{p.authors.map((a, i) => {
+												const isMe = a.replace('*', '') === ME;
+												return (
+													<>
+														{isMe ? <strong class="ab-me">{a}</strong> : <span>{a}</span>}
+														{i < p.authors.length - 1 ? ', ' : '.'}
+													</>
+												);
+											})}
+										</p>
+										<p class="ab-pub__where">{p.where}</p>
+										<p class="ab-pub__summary">{p.summary}</p>
+										<p class="ab-pub__tags">
+											{p.tags.map((t) => (
+												<span class="ab-badge">{t}</span>
+											))}
+										</p>
+										{p.links.length > 0 && (
+											<p class="ab-pub__links">
+												{p.links.map((l) => (
+													<a href={l.href} target="_blank" rel="noreferrer">
+														[{l.label}]
+													</a>
+												))}
+											</p>
+										)}
+									</div>
+								</li>
+							))
+						}
+					</ol>
+				</section>
+
+				<!-- ── 03 experience ──────────────────────── -->
+				<section class="ab-sec" data-reveal>
+					<h2 class="ab-h"><span class="ab-h__no">{no('Experience')}</span>Experience</h2>
+					<ul class="ab-list">
+						{
+							experience.map((e) => (
+								<li class="ab-item">
+									<div class="ab-item__head">
+										<h3 class="ab-item__org">
+											{e.org}
+											<span class="ab-item__place">{e.place}</span>
+										</h3>
+										<span class="ab-date">{e.date}</span>
+									</div>
+									<p class="ab-item__role">{e.role}</p>
+									<p class="ab-item__topic">
+										<span class="ab-item__k">Topic</span>
+										{e.topic}
+									</p>
+									<ul class="ab-points">
+										{e.points.map((pt) => (
+											<li>{pt}</li>
+										))}
+									</ul>
+								</li>
+							))
+						}
+					</ul>
+				</section>
+
+				<!-- ── 04 projects ────────────────────────── -->
+				<section class="ab-sec" data-reveal>
+					<h2 class="ab-h"><span class="ab-h__no">{no('Projects')}</span>Projects</h2>
+					<ul class="ab-list">
+						{
+							projects.map((p) => (
+								<li class="ab-item">
+									<div class="ab-item__head">
+										<h3 class="ab-item__org">{p.name}</h3>
+										<span class="ab-date">{p.date}</span>
+									</div>
+									<p class="ab-item__role">{p.role}</p>
+									<p class="ab-item__text">{p.text}</p>
+									{p.link && (
+										<p class="ab-item__links">
+											<a href={p.link.href} target="_blank" rel="noreferrer">
+												[{p.link.label}]
+											</a>
+										</p>
+									)}
+								</li>
+							))
+						}
+					</ul>
+				</section>
+
+				<!-- ── 05 honors ──────────────────────────── -->
+				<section class="ab-sec" data-reveal>
+					<h2 class="ab-h"><span class="ab-h__no">{no('Honors & Awards')}</span>Honors &amp; Awards</h2>
+					<ul class="ab-honors">
+						{
+							honors.map((h) => (
+								<li>
+									<span class="ab-honors__name">{h.name}</span>
+									<span class="ab-honors__dots" aria-hidden="true" />
+									<span class="ab-honors__year">{h.year || '—'}</span>
+								</li>
+							))
+						}
+					</ul>
+				</section>
+
+				<!-- ── 06 skills ──────────────────────────── -->
+				<section class="ab-sec" data-reveal>
+					<h2 class="ab-h"><span class="ab-h__no">{no('Skills')}</span>Skills</h2>
+					<dl class="ab-skills">
+						{
+							skills.map(([k, v]) => (
+								<div>
+									<dt>{k}</dt>
+									<dd>{v}</dd>
+								</div>
+							))
+						}
+					</dl>
 				</section>
 			</div>
-
-			<section class="mt-10">
-				<div class="mb-4 flex items-center justify-between" data-reveal>
-					<h2 class="text-xl font-semibold tracking-tight">Latest Posts</h2>
-					<a
-						href={`${BASE}blog/`}
-						class="apple-float-chip inline-flex items-center gap-1.5 rounded-xl border border-zinc-300/90 bg-zinc-50/96 px-3 py-1.5 text-sm font-medium text-zinc-700 no-underline dark:border-zinc-700/90 dark:bg-zinc-900/96 dark:text-zinc-300"
-					>
-						<span class="apple-float-label">
-							<span>View all</span>
-							<svg viewBox="0 0 20 20" class="h-4 w-4 opacity-75" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-								<path d="M4.75 10h10.5" stroke-linecap="round" />
-								<path d="M10.75 5.5 15.25 10l-4.5 4.5" stroke-linecap="round" stroke-linejoin="round" />
-							</svg>
-						</span>
-					</a>
-				</div>
-				<ul class="grid gap-4 md:grid-cols-2">
-					{
-						posts.map((post, idx) => (
-							<li class="relative" data-reveal style={`--reveal-delay: ${(idx % 2) * 80}ms`}>
-								<PostCard
-									post={post}
-									base={BASE}
-									titleTag="h3"
-									titleClass="mt-2 text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
-									descriptionClass="mt-2 font-serif text-sm leading-7 text-zinc-600 dark:text-zinc-300"
-									maxMobile={3}
-									maxDesktop={3}
-									reloadOnNavigate={false}
-								/>
-							</li>
-						))
-					}
-				</ul>
-			</section>
 		</main>
 		<Footer />
 
-		<script is:inline>
-			(() => {
-				/*
-				 * Pop-art dot ribbon: a drifting halftone wave on <canvas>.
-				 * Gold dots with sparse blue accents and hollow rings; brightness and
-				 * size follow two layered sine waves so the band reads as a slow,
-				 * left-to-right current with twinkling crests.
-				 * Pauses off-screen / in hidden tabs; reduced motion gets one static frame.
-				 */
-				const initDotsBand = () => {
-					const wrap = document.querySelector('[data-dots-band]');
-					if (!wrap || wrap.dataset.bound === 'true') return;
-					wrap.dataset.bound = 'true';
+		<style>
+			.ab {
+				--ab-text: var(--ink);
+				--ab-mute: color-mix(in srgb, var(--ink) 62%, transparent);
+				color: var(--ab-text);
+			}
 
-					const canvas = wrap.querySelector('canvas');
-					const ctx = canvas?.getContext('2d');
-					if (!ctx) return;
+			/* ── profile ─────────────────────────────── */
+			.ab-profile {
+				display: grid;
+				grid-template-columns: auto minmax(0, 1fr);
+				gap: 2rem;
+				align-items: center;
+				padding: 1.6rem;
+				border: 2px solid var(--line);
+				border-radius: 1.4rem;
+				background: var(--card);
+				box-shadow: var(--ink-shadow-lg);
+				color: var(--on-card);
+			}
 
-					const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-					const SPACING = 17;
-					const ROWS = 3;
+			.ab-profile__photo {
+				width: 10.5rem;
+				aspect-ratio: 1;
+				overflow: hidden;
+				border: 2px solid var(--line);
+				border-radius: 1rem;
+				box-shadow: 4px 4px 0 var(--line);
+				background: var(--sun);
+			}
 
-					let width = 0;
-					let height = 0;
-					let dots = [];
+			.ab-profile__photo img {
+				display: block;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
 
-					const build = () => {
-						const dpr = Math.min(window.devicePixelRatio || 1, 2);
-						const rect = wrap.getBoundingClientRect();
-						width = rect.width;
-						height = rect.height;
-						canvas.width = Math.max(1, Math.round(width * dpr));
-						canvas.height = Math.max(1, Math.round(height * dpr));
-						ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+			.ab-eyebrow {
+				margin: 0 0 0.5rem;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 11px;
+				letter-spacing: 0.22em;
+				text-transform: uppercase;
+				opacity: 0.6;
+			}
 
-						dots = [];
-						const cols = Math.ceil(width / SPACING) + 1;
-						for (let c = 0; c < cols; c++) {
-							for (let r = 0; r < ROWS; r++) {
-								dots.push({
-									x: c * SPACING,
-									row: r,
-									phase: Math.random() * Math.PI * 2,
-									twinkle: 0.6 + Math.random() * 0.9,
-									accent: Math.random() < 0.055,
-									ring: Math.random() < 0.075,
-								});
-							}
-						}
-					};
+			.ab-name {
+				margin: 0;
+				font-size: clamp(1.9rem, 5vw, 2.9rem);
+				line-height: 1.05;
+			}
 
-					let t = Math.random() * 100;
-					let rafId = 0;
-					let running = false;
+			.ab-name .font-sans {
+				font-family: 'Unbounded', 'Arial Black', sans-serif;
+				font-weight: 900;
+				text-transform: uppercase;
+				color: var(--slate);
+				-webkit-text-stroke: 0.045em var(--line);
+				paint-order: stroke fill;
+			}
 
-					const draw = () => {
-						ctx.clearRect(0, 0, width, height);
-						const dark = document.documentElement.classList.contains('dark');
-						const base = dark ? '226, 190, 110' : '170, 118, 32';
-						const accent = dark ? '96, 165, 250' : '37, 99, 235';
-						const rowGap = height / (ROWS + 1);
+			.ab-role {
+				margin: 0.7rem 0 0.4rem;
+				font-weight: 600;
+			}
 
-						for (const d of dots) {
-							// Primary wave travels right; the slower secondary wave breaks uniformity.
-							const wave = Math.sin(d.x * 0.018 - t * 1.55 + d.row * 0.85);
-							const drift = Math.sin(d.x * 0.0065 + t * 0.6 + d.phase);
-							const y = rowGap * (d.row + 1) + wave * 7 + drift * 3;
-							const crest = (wave + 1) / 2;
-							const pulse = (Math.sin(t * d.twinkle * 2 + d.phase) + 1) / 2;
-							const alpha = 0.07 + crest * 0.3 + pulse * 0.22 * crest;
-							const radius = 1.05 + crest * 1.25 + pulse * 0.65;
-							const rgb = d.accent ? accent : base;
+			.ab-aff {
+				margin: 0;
+				font-size: 0.92rem;
+				line-height: 1.6;
+				opacity: 0.78;
+			}
 
-							if (d.ring) {
-								ctx.strokeStyle = `rgba(${rgb}, ${Math.min(alpha * 1.15, 0.6)})`;
-								ctx.lineWidth = 1;
-								ctx.beginPath();
-								ctx.arc(d.x, y, radius + 1.4, 0, Math.PI * 2);
-								ctx.stroke();
-							} else {
-								ctx.fillStyle = `rgba(${rgb}, ${alpha})`;
-								ctx.beginPath();
-								ctx.arc(d.x, y, radius, 0, Math.PI * 2);
-								ctx.fill();
-							}
-						}
-					};
+			.ab-contact {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.25rem 0.6rem;
+				margin: 0.8rem 0 0;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.82rem;
+			}
 
-					const tick = () => {
-						t += 0.016;
-						draw();
-						rafId = requestAnimationFrame(tick);
-					};
+			.ab-contact__k {
+				font-weight: 700;
+			}
 
-					let destroyed = false;
-					let inView = true;
-					const start = () => {
-						if (running || destroyed || reducedMotion) return;
-						running = true;
-						rafId = requestAnimationFrame(tick);
-					};
-					const stop = () => {
-						running = false;
-						if (rafId) cancelAnimationFrame(rafId);
-						rafId = 0;
-					};
+			.ab-links {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.6rem;
+				margin-top: 1rem;
+			}
 
-					let resizeRaf = 0;
-					let io = null;
-					const onVisibility = () => {
-						if (document.hidden || !inView) stop();
-						else start();
-					};
-					const onResize = () => {
-						if (resizeRaf) return;
-						resizeRaf = requestAnimationFrame(() => {
-							resizeRaf = 0;
-							build();
-							draw();
-						});
-					};
+			.ab-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.45rem;
+				padding: 0.4rem 0.85rem;
+				border: 2px solid var(--line);
+				border-radius: 999px;
+				background: var(--paper);
+				box-shadow: 2px 2px 0 var(--line);
+				color: var(--on-card);
+				font-size: 0.85rem;
+				font-weight: 600;
+				text-decoration: none;
+				transition:
+					transform 0.15s,
+					box-shadow 0.15s;
+			}
 
-					// Full teardown so route swaps and tab switches can never revive a
-					// loop that draws to a detached canvas.
-					const destroy = () => {
-						destroyed = true;
-						stop();
-						if (resizeRaf) cancelAnimationFrame(resizeRaf);
-						resizeRaf = 0;
-						if (io) io.disconnect();
-						document.removeEventListener('visibilitychange', onVisibility);
-						window.removeEventListener('resize', onResize);
-						document.removeEventListener('astro:before-swap', destroy);
-					};
+			.ab-chip:hover {
+				transform: translate(-1px, -1px);
+				box-shadow: 3px 3px 0 var(--line);
+			}
 
-					// Replace any instance left over from a previous route.
-					if (typeof window.__dotsBandDestroy === 'function') window.__dotsBandDestroy();
-					window.__dotsBandDestroy = destroy;
+			.ab-chip svg {
+				width: 1rem;
+				height: 1rem;
+			}
 
-					build();
-					draw();
+			/* ── sections ────────────────────────────── */
+			.ab-sec {
+				margin-top: 3.2rem;
+			}
 
-					if (!reducedMotion) {
-						io = new IntersectionObserver((entries) => {
-							for (const entry of entries) {
-								inView = entry.isIntersecting;
-								if (inView && !document.hidden) start();
-								else stop();
-							}
-						});
-						io.observe(wrap);
-						document.addEventListener('visibilitychange', onVisibility);
-					}
+			.ab-h {
+				display: flex;
+				align-items: baseline;
+				gap: 0.8rem;
+				margin: 0 0 1.2rem;
+				padding-bottom: 0.6rem;
+				border-bottom: 2px solid var(--line);
+				font-family: 'Unbounded', 'Arial Black', sans-serif;
+				font-weight: 900;
+				font-size: clamp(1.15rem, 2.6vw, 1.5rem);
+				text-transform: uppercase;
+				letter-spacing: 0.02em;
+				color: var(--ab-text);
+			}
 
-					window.addEventListener('resize', onResize);
-					document.addEventListener('astro:before-swap', destroy);
-				};
+			.ab-h__no {
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-weight: 500;
+				font-size: 0.7em;
+				color: var(--slate);
+			}
 
-				// Keep exactly one document-level page-load hook no matter how many times
-				// this inline script re-executes across View Transition navigations.
-				window.__dotsBandInit = initDotsBand;
-				if (!window.__dotsBandPageLoadBound) {
-					window.__dotsBandPageLoadBound = true;
-					document.addEventListener('astro:page-load', () => {
-						if (typeof window.__dotsBandInit === 'function') window.__dotsBandInit();
-					});
+			.ab-bio p {
+				margin: 0 0 0.9rem;
+				line-height: 1.8;
+			}
+
+			.ab-sub {
+				margin: 1.2rem 0 0.6rem;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 11px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--ab-mute);
+			}
+
+			.ab-note {
+				margin: -0.4rem 0 1rem;
+				font-size: 0.85rem;
+				color: var(--ab-mute);
+			}
+
+			/* tags & tones (fills stay light in both modes, so text stays ink) */
+			.ab-interests {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.6rem;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+
+			.ab-tag {
+				padding: 0.35rem 0.8rem;
+				border: 2px solid var(--line);
+				border-radius: 999px;
+				box-shadow: 2px 2px 0 var(--line);
+				color: #231f20;
+				font-size: 0.85rem;
+				font-weight: 600;
+			}
+
+			.ab-tag--pink,
+			.ab-tone--pink {
+				background: #e9a99a;
+			}
+			.ab-tag--teal,
+			.ab-tone--teal {
+				background: #8fb5b0;
+			}
+			.ab-tag--sun,
+			.ab-tone--sun {
+				background: #f4c64e;
+			}
+			.ab-tag--slate,
+			.ab-tone--slate {
+				background: #b8bdd3;
+			}
+
+			/* ── publications ────────────────────────── */
+			.ab-pubs {
+				display: grid;
+				gap: 1.2rem;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+
+			.ab-pub {
+				display: grid;
+				grid-template-columns: 7.5rem minmax(0, 1fr);
+				gap: 1.4rem;
+				padding: 1.2rem;
+				border: 2px solid var(--line);
+				border-radius: 1.1rem;
+				background: var(--card);
+				box-shadow: var(--ink-shadow);
+				color: var(--on-card);
+			}
+
+			/* left: the paper's first page, like a small printed sheet */
+			.ab-pub__page {
+				align-self: start;
+				margin: 0;
+				overflow: hidden;
+				border: 1.5px solid var(--line);
+				border-radius: 0.35rem;
+				background: #fff;
+				box-shadow: 3px 3px 0 var(--line);
+				aspect-ratio: 3 / 4;
+			}
+
+			.ab-pub__page img {
+				display: block;
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				object-position: top;
+			}
+
+			/* venue: one quiet mono line above the title */
+			.ab-pub__venue {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.15rem 0.45rem;
+				margin: 0 0 0.45rem;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.72rem;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--ab-mute);
+			}
+
+			.ab-pub__dot {
+				width: 0.62rem;
+				height: 0.62rem;
+				border: 1.5px solid var(--line);
+				border-radius: 50%;
+			}
+
+			.ab-pub__sep {
+				opacity: 0.5;
+			}
+
+			.ab-pub__title {
+				margin: 0 0 0.45rem;
+				font-size: 1.02rem;
+				font-weight: 700;
+				line-height: 1.45;
+			}
+
+			.ab-pub__authors,
+			.ab-pub__where,
+			.ab-pub__summary {
+				margin: 0 0 0.35rem;
+				font-size: 0.9rem;
+				line-height: 1.6;
+			}
+
+			.ab-pub__where {
+				font-style: italic;
+			}
+
+			.ab-pub__summary {
+				opacity: 0.75;
+			}
+
+			.ab-me {
+				font-weight: 800;
+				background: linear-gradient(transparent 58%, rgba(244, 198, 78, 0.75) 58%);
+			}
+
+			:global(html.dark) .ab-me {
+				padding: 0 0.2em;
+				border-radius: 0.2em;
+				background: #f4c64e;
+				color: #231f20;
+			}
+
+			.ab-pub__tags {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.4rem;
+				margin: 0.5rem 0 0;
+			}
+
+			.ab-pub__links {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.2rem 0.7rem;
+				margin: 0.55rem 0 0;
+				font-size: 0.88rem;
+				font-weight: 600;
+			}
+
+			.ab-badge {
+				padding: 0.1rem 0.6rem;
+				border: 1.5px solid var(--line);
+				border-radius: 999px;
+				font-size: 0.74rem;
+				font-weight: 700;
+			}
+
+			/* ── experience / projects ─────────────── */
+			.ab-list {
+				display: grid;
+				gap: 1.6rem;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+
+			.ab-item {
+				padding-left: 1.1rem;
+				border-left: 3px solid var(--line);
+			}
+
+			.ab-item__head {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 0.2rem 1rem;
+			}
+
+			.ab-item__org {
+				margin: 0;
+				font-size: 1.02rem;
+				font-weight: 700;
+				line-height: 1.4;
+			}
+
+			.ab-item__place {
+				margin-left: 0.4rem;
+				font-weight: 400;
+				font-size: 0.88rem;
+				color: var(--ab-mute);
+			}
+
+			.ab-date {
+				flex-shrink: 0;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.78rem;
+				color: var(--ab-mute);
+				white-space: nowrap;
+			}
+
+			.ab-item__role {
+				margin: 0.25rem 0 0;
+				font-style: italic;
+				font-size: 0.92rem;
+			}
+
+			.ab-item__topic {
+				margin: 0.35rem 0 0;
+				font-size: 0.9rem;
+			}
+
+			.ab-item__k {
+				margin-right: 0.45rem;
+				padding: 0 0.45rem;
+				border: 1.5px solid var(--line);
+				border-radius: 0.35rem;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.68rem;
+				text-transform: uppercase;
+			}
+
+			.ab-item__text {
+				margin: 0.45rem 0 0;
+				font-size: 0.92rem;
+				line-height: 1.7;
+			}
+
+			.ab-item__links {
+				margin: 0.4rem 0 0;
+				font-size: 0.88rem;
+				font-weight: 600;
+			}
+
+			.ab-points {
+				margin: 0.5rem 0 0;
+				padding-left: 1.1rem;
+				font-size: 0.9rem;
+				line-height: 1.7;
+			}
+
+			.ab-points li + li {
+				margin-top: 0.2rem;
+			}
+
+			/* ── honors ──────────────────────────────── */
+			.ab-honors {
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+
+			.ab-honors li {
+				display: flex;
+				align-items: baseline;
+				gap: 0.6rem;
+				padding: 0.45rem 0;
+			}
+
+			.ab-honors__name {
+				min-width: 0;
+				font-size: 0.95rem;
+			}
+
+			.ab-honors__dots {
+				flex: 1 1 1.5rem;
+				min-width: 1.5rem;
+				border-bottom: 2px dotted color-mix(in srgb, var(--ink) 40%, transparent);
+				transform: translateY(-0.3em);
+			}
+
+			.ab-honors__year {
+				flex-shrink: 0;
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.85rem;
+				color: var(--ab-mute);
+			}
+
+			/* ── skills ──────────────────────────────── */
+			.ab-skills {
+				display: grid;
+				gap: 0.6rem;
+				margin: 0;
+			}
+
+			.ab-skills > div {
+				display: grid;
+				grid-template-columns: 9rem minmax(0, 1fr);
+				gap: 1rem;
+			}
+
+			.ab-skills dt {
+				font-weight: 700;
+			}
+
+			.ab-skills dd {
+				margin: 0;
+			}
+
+			/* ── small screens: everything stacks ───── */
+			@media (max-width: 640px) {
+				.ab-profile {
+					grid-template-columns: minmax(0, 1fr);
+					gap: 1.2rem;
+					padding: 1.2rem;
 				}
-				initDotsBand();
-			})();
-		</script>
-	<MusicPlayer />
+
+				.ab-profile__photo {
+					width: 7rem;
+				}
+
+				.ab-pub {
+					grid-template-columns: minmax(0, 1fr);
+					gap: 0.9rem;
+				}
+
+				.ab-pub__page {
+					aspect-ratio: 16 / 9;
+				}
+
+
+				.ab-skills > div {
+					grid-template-columns: minmax(0, 1fr);
+					gap: 0.1rem;
+				}
+			}
+		</style>
 	</body>
 </html>

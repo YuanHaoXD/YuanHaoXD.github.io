@@ -126,7 +126,8 @@ export default defineConfig({
 		mdx(),
 		sitemap({
 			filter: (page) => {
-				if (page === 'https://yuanhaoxd.github.io/admin/' || page === 'https://yuanhaoxd.github.io/important/') {
+				// /about/ only forwards to the root (the academic page)
+				if (page === 'https://yuanhaoxd.github.io/admin/' || page === 'https://yuanhaoxd.github.io/important/' || page === 'https://yuanhaoxd.github.io/about/') {
 					return false;
 				}
 				return !/^https:\/\/yuanhaoxd\.github\.io\/blog\/page\/\d+\/$/.test(page);

@@ -20,7 +20,8 @@
  *
  * The full story plays on every hard load of the home page (and the first
  * hard load of any page in a session); other repeat hard loads get a ~1.5s
- * quick cut (line → hole). Click or the skip button fast-forwards. Gate: `html.is-splashing`, set in BaseHead.
+ * quick cut (line → hole). Click or the skip button fast-forwards; the
+ * "带声音进入" button (bottom-left) is the only way music starts with the intro. Gate: `html.is-splashing`, set in BaseHead.
  */
 const INK = '#231f20';
 const SLATE = '#686e87';
@@ -59,10 +60,11 @@ const rays = Array.from({ length: 12 }, (_, i) => {
 // Line-art cloud: flat base, four bumps. Drawn at the origin, placed by transform.
 const CLOUD = 'M0 0 H124 A18 18 0 0 0 116 -30 A24 24 0 0 0 78 -46 A30 30 0 0 0 26 -40 A20 20 0 0 0 0 0 Z';
 const clouds = [
-	{ x: 168, y: 300, s: 1.15, layer: 'back' },
-	{ x: 470, y: 272, s: 0.9, layer: 'back' },
-	{ x: 250, y: 360, s: 1.35, layer: 'front' },
-	{ x: 430, y: 380, s: 1.2, layer: 'front' },
+	// kept clear of the landed star + its rays (a 108-unit circle round 380,382)
+	{ x: 160, y: 280, s: 1.0, layer: 'back' },
+	{ x: 470, y: 262, s: 0.9, layer: 'back' },
+	{ x: 152, y: 352, s: 0.95, layer: 'front' },
+	{ x: 492, y: 342, s: 0.95, layer: 'front' },
 ];
 
 const cracks = [
@@ -85,7 +87,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 	<!-- 2 · paper flood + illustrated scene -->
 	<div class="ld__paper" data-ld-paper>
 		<div class="ld__stage" data-ld-stage>
-			<svg class="ld__scene" viewBox="0 0 760 600" data-ld-scene>
+			<svg class="ld__scene" viewBox="0 30 760 542" data-ld-scene>
 				<defs>
 					<clipPath id="ld-win"><circle cx={CX} cy={CY} r={R}></circle></clipPath>
 					<pattern id="ld-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -103,32 +105,32 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 
 				<!-- side pillars -->
 				<g data-ld-pillar>
-					<path d="M54 560 V300 a45 45 0 0 1 90 0 V560 Z" fill={TEAL} stroke={INK} stroke-width="2.5"></path>
-					<path d="M54 560 V300 a45 45 0 0 1 90 0 V560 Z" fill="url(#ld-hatch-fine)"></path>
-					<path d="M70 560 V306 a29 29 0 0 1 58 0 V560" fill="none" stroke={INK} stroke-width="1.5"></path>
-					<circle cx="99" cy="300" r="9" fill={PAPER} stroke={INK} stroke-width="2"></circle>
+					<path d="M30 560 V300 a41 41 0 0 1 82 0 V560 Z" fill={TEAL} stroke={INK} stroke-width="2.5"></path>
+					<path d="M30 560 V300 a41 41 0 0 1 82 0 V560 Z" fill="url(#ld-hatch-fine)"></path>
+					<path d="M44 560 V305 a27 27 0 0 1 54 0 V560" fill="none" stroke={INK} stroke-width="1.5"></path>
+					<circle cx="71" cy="300" r="9" fill={PAPER} stroke={INK} stroke-width="2"></circle>
 				</g>
 				<g data-ld-pillar>
-					<path d="M616 560 V300 a45 45 0 0 1 90 0 V560 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
-					<path d="M616 560 V300 a45 45 0 0 1 90 0 V560 Z" fill="url(#ld-hatch-fine)"></path>
-					<path d="M632 560 V306 a29 29 0 0 1 58 0 V560" fill="none" stroke={INK} stroke-width="1.5"></path>
-					<circle cx="661" cy="300" r="9" fill={PAPER} stroke={INK} stroke-width="2"></circle>
+					<path d="M648 560 V300 a41 41 0 0 1 82 0 V560 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
+					<path d="M648 560 V300 a41 41 0 0 1 82 0 V560 Z" fill="url(#ld-hatch-fine)"></path>
+					<path d="M662 560 V305 a27 27 0 0 1 54 0 V560" fill="none" stroke={INK} stroke-width="1.5"></path>
+					<circle cx="689" cy="300" r="9" fill={PAPER} stroke={INK} stroke-width="2"></circle>
 				</g>
 
 				<!-- hatched corner wedges -->
 				<g data-ld-wedge>
-					<path d="M122 120 H196 Q150 170 140 236 H122 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
-					<path d="M122 120 H196 Q150 170 140 236 H122 Z" fill="url(#ld-hatch)" opacity="0.5"></path>
+					<path d="M122 120 H180 Q140 170 132 220 H122 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
+					<path d="M122 120 H180 Q140 170 132 220 H122 Z" fill="url(#ld-hatch)" opacity="0.5"></path>
 				</g>
 				<g data-ld-wedge>
-					<path d="M638 120 H564 Q610 170 620 236 H638 Z" fill={SLATE} stroke={INK} stroke-width="2.5"></path>
-					<path d="M638 120 H564 Q610 170 620 236 H638 Z" fill="url(#ld-hatch)" opacity="0.5"></path>
+					<path d="M638 120 H580 Q620 170 628 220 H638 Z" fill={SLATE} stroke={INK} stroke-width="2.5"></path>
+					<path d="M638 120 H580 Q620 170 628 220 H638 Z" fill="url(#ld-hatch)" opacity="0.5"></path>
 				</g>
 
 				<!-- the window -->
 				<g clip-path="url(#ld-win)" data-ld-window>
 					<rect x="140" y="50" width="480" height="480" fill="url(#ld-sky)"></rect>
-					<circle cx="520" cy="150" r="30" fill={PAPER} stroke={INK} stroke-width="2.5"></circle>
+					<circle cx="250" cy="150" r="30" fill={PAPER} stroke={INK} stroke-width="2.5"></circle>
 					<g data-ld-clouds="back">
 						{
 							clouds
@@ -143,8 +145,8 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 						}
 					</g>
 					<g data-ld-mountains>
-						<path d="M150 404 L214 330 L250 370 L286 344 L338 404 Z" fill={PINK} stroke={INK} stroke-width="2.5" stroke-linejoin="round"></path>
-						<path d="M440 404 L506 352 L540 380 L586 336 L630 404 Z" fill="#d9b6c8" stroke={INK} stroke-width="2.5" stroke-linejoin="round"></path>
+						<path d="M146 404 L196 344 L222 372 L244 356 L268 404 Z" fill={PINK} stroke={INK} stroke-width="2.5" stroke-linejoin="round"></path>
+						<path d="M492 404 L536 362 L558 382 L590 340 L630 404 Z" fill="#d9b6c8" stroke={INK} stroke-width="2.5" stroke-linejoin="round"></path>
 					</g>
 					<g data-ld-clouds="front">
 						{
@@ -203,7 +205,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 					<circle cx={CX} cy={CY} r={R} stroke-width="3" pathLength="1"></circle>
 					<circle cx={CX} cy={CY} r={R + 10} stroke-width="1.6" pathLength="1"></circle>
 				</g>
-				<line x1="40" y1="560" x2="720" y2="560" stroke={INK} stroke-width="2.5" pathLength="1" data-ld-plinth></line>
+				<line x1="18" y1="560" x2="742" y2="560" stroke={INK} stroke-width="2.5" pathLength="1" data-ld-plinth></line>
 			</svg>
 
 			<h1 class="ld__title">
@@ -224,6 +226,11 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		<span class="ld__hide-sm">A small archive · 2026</span>
 		<span>Loading <b data-ld-pct>000</b>%</span>
 	</header>
+
+	<button class="ld__sound" type="button" data-ld-sound aria-pressed="false">
+		<span class="ld__sound-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+		<span data-ld-sound-label>带声音进入</span>
+	</button>
 
 	<button class="ld__skip" type="button" data-ld-skip aria-label="Skip intro">
 		<svg viewBox="0 0 24 24"><path d="M5 5 L13 12 L5 19 Z M12 5 L20 12 L12 19 Z" fill="currentColor"></path></svg>
@@ -305,11 +312,16 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		clip-path: circle(0% at 50% 50%);
 	}
 
+	/* scene, title and caption are stacked — each in its own band. The width
+	   is chosen so the whole stack (about 1 × width tall) fits between the top
+	   bar and the bottom buttons. The caption hangs in the reserved bottom
+	   margin, so retyping it never shifts the layout. */
 	.ld__stage {
+		--ld-w: max(240px, min(94vw, calc(100vh - 180px), 880px));
 		position: relative;
-		width: min(94vw, 106vh, 980px);
+		width: var(--ld-w);
+		margin-bottom: calc(var(--ld-w) * 0.1);
 		container-type: inline-size;
-		margin-top: 2vh;
 	}
 
 	.ld__scene {
@@ -319,18 +331,15 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		overflow: visible;
 	}
 
+	/* below the plinth, with room above for the letters' hop on impact */
 	.ld__title {
-		position: absolute;
-		left: 50%;
-		top: 86.5%;
 		display: flex;
-		margin: 0;
-		padding: 0 2.2cqw;
-		transform: translate(-50%, -50%);
-		background: var(--ld-paper);
+		justify-content: center;
+		margin: 4cqw 0 0;
+		padding: 0;
 		font-family: 'Unbounded', 'Arial Black', sans-serif;
 		font-weight: 900;
-		font-size: 10.5cqw;
+		font-size: 10cqw;
 		line-height: 1;
 		letter-spacing: 0.01em;
 		color: var(--ld-slate);
@@ -353,11 +362,15 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 
 	.ld__dialog {
 		position: absolute;
-		left: 3%;
-		top: 63%;
-		width: 37cqw;
-		padding: 2.2cqw 3cqw;
-		transform-origin: 90% 0%;
+		top: calc(100% + 2.6cqw);
+		left: 0;
+		right: 0;
+		width: max(48cqw, 236px);
+		max-width: 100%;
+		margin: 0 auto;
+		padding: 2cqw 3cqw;
+		text-align: center;
+		transform-origin: 50% 0%;
 	}
 
 	.ld__dialog-frame {
@@ -422,6 +435,65 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		height: 16px;
 	}
 
+	/* opt-in sound, mirrored opposite the skip button — music only ever
+	   starts from a click */
+	.ld__sound {
+		position: absolute;
+		left: clamp(16px, 3vw, 40px);
+		bottom: clamp(16px, 3vh, 32px);
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		height: 42px;
+		padding: 0 18px 0 16px;
+		border-radius: 999px;
+		border: 1.5px solid currentColor;
+		background: transparent;
+		color: var(--ld-paper);
+		font-family: 'JetBrains Mono', ui-monospace, Consolas, 'Microsoft YaHei', monospace;
+		font-size: 12px;
+		letter-spacing: 0.12em;
+		cursor: pointer;
+		transition: transform 0.3s;
+	}
+
+	.ld__sound:hover {
+		transform: scale(1.04);
+	}
+
+	.ld__sound-eq {
+		display: flex;
+		align-items: flex-end;
+		gap: 2px;
+		height: 12px;
+	}
+
+	.ld__sound-eq i {
+		width: 2px;
+		height: 35%;
+		background: currentColor;
+	}
+
+	.ld__sound.is-on .ld__sound-eq i {
+		animation: ld-eq 0.8s ease-in-out infinite alternate;
+	}
+
+	.ld__sound.is-on .ld__sound-eq i:nth-child(2) {
+		animation-duration: 0.6s;
+		animation-delay: -0.25s;
+	}
+
+	.ld__sound.is-on .ld__sound-eq i:nth-child(3) {
+		animation-duration: 1s;
+		animation-delay: -0.5s;
+	}
+
+	@keyframes ld-eq {
+		to {
+			height: 100%;
+		}
+	}
+
 	/* the star's light — a soft warm disc scaled up until it fills the screen */
 	.ld-bloom {
 		position: fixed;
@@ -455,9 +527,6 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 			display: none;
 		}
 		.ld__dialog {
-			left: 8%;
-			top: 104%;
-			width: 84cqw;
 			padding: 3cqw 4cqw;
 		}
 		.ld__dialog p {
@@ -531,6 +600,8 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		const pct = $('[data-ld-pct]');
 		const bar = $('[data-ld-bar]');
 		const skip = $('[data-ld-skip]');
+		const sound = $('[data-ld-sound]');
+		const soundLabel = $('[data-ld-sound-label]');
 		const paper = $('[data-ld-paper]');
 		const scene = $<SVGSVGElement>('[data-ld-scene]');
 		const stage = $('[data-ld-stage]');
@@ -623,6 +694,23 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 			fastForward();
 		});
 
+		// opt-in sound: the click is the user gesture that lets the music start;
+		// it fades in slowly, under the rest of the intro
+		const syncSound = (on: boolean) => {
+			sound.classList.toggle('is-on', on);
+			sound.setAttribute('aria-pressed', String(on));
+			soundLabel.textContent = on ? '声音已开启' : '带声音进入';
+		};
+		syncSound(!!w.__yhMusic?.playing);
+		sound.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const music = w.__yhMusic;
+			if (!music) return;
+			if (music.playing) music.pause();
+			else music.play(2400);
+			syncSound(music.playing);
+		});
+
 		// Later hard loads in the same session get a quick cut: the line completes
 		// and the page opens straight from the centre — no scene, no story.
 		const quickCut = () => {
@@ -660,7 +748,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 				.to(lineState, { len: maxLen(), duration: 0.35, ease: 'power2.out' }, 0)
 				.to(lineState, { len: 0, alpha: 0, duration: 0.45, ease: 'expo.in' }, 0.35)
 				.to(paper, { clipPath: 'circle(75% at 50% 50%)', duration: 1.1, ease: 'expo.inOut' }, 0.65)
-				.to([bar, skip], { color: '#231f20', duration: 0.4 }, 0.95);
+				.to([bar, skip, sound], { color: '#231f20', duration: 0.4 }, 0.95);
 
 			// ink the scene in
 			const build = 1.1;
@@ -741,9 +829,11 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 
 			// letters get knocked loose — the ones nearest the impact first
 			const mid = (chars.length - 1) / 2;
+			// hop height stays under the 4cqw gap above the title, so letters never touch the scene
+			const hop = stage.offsetWidth * 0.028;
 			chars.forEach((c, i) => {
 				const at = hit + 0.04 + Math.abs(i - mid) * 0.035;
-				tl.to(c, { y: gsap.utils.random(-70, -26), rotation: gsap.utils.random(-16, 16), duration: 0.24, ease: 'power2.out' }, at).to(
+				tl.to(c, { y: -gsap.utils.random(0.45, 1) * hop, rotation: gsap.utils.random(-10, 10), duration: 0.24, ease: 'power2.out' }, at).to(
 					c,
 					{ y: 0, rotation: 0, duration: 0.55, ease: 'bounce.out' },
 					at + 0.24,
@@ -798,7 +888,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 			tl.to(rays, { scale: 1.5, rotation: '+=40', duration: 0.6, ease: 'back.out(2.4)' }, exit)
 				.to(sparkles, { scale: 1.3, duration: 0.35, ease: 'back.out(3)' }, exit)
 				.to(dialog, { autoAlpha: 0, y: -10, duration: 0.35 }, exit)
-				.to([bar, skip], { autoAlpha: 0, duration: 0.35 }, exit)
+				.to([bar, skip, sound], { autoAlpha: 0, duration: 0.35 }, exit)
 				.add(bloom, exit + 0.35)
 				// push in on the star as its light grows
 				.to(stage, { scale: 3.2, duration: 1.3, ease: 'power2.in' }, exit + 0.4)

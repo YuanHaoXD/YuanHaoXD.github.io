@@ -246,8 +246,15 @@ html.dark .markdown-prose a {
 }
 
 /* ── Footer ────────────────────────────────────────────── */
+/* the rule spans only the content column, so it never runs through the side art */
 footer {
-	border-top: 2px solid var(--line) !important;
+	border-top: 0 !important;
+	padding-top: 0 !important;
+}
+
+footer > .page-shell {
+	border-top: 2px solid var(--line);
+	padding-top: 2rem;
 }
 
 /* ── Inked scrollbar ───────────────────────────────────── */

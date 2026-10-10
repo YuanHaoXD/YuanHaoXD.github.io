@@ -235,7 +235,8 @@ const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 0 0.22em;
-		margin: 0;
+		/* room for the g's descender above the meta rule below */
+		margin: 0 0 0.32em;
 		color: #fafafa;
 		font-weight: 400;
 		font-size: clamp(56px, 14.5cqw, 190px);
@@ -254,10 +255,18 @@ const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
 		padding-right: 0.08em;
 	}
 
-	/* SplitText line masks: let italics breathe so glyph tails aren't clipped. */
+	/* SplitText line masks (the clipping wrapper is `.yh-line-mask`, a clone of
+	   the line): give italics and descenders like the g room inside the clip;
+	   negative margins keep the layout where it was. The clip is lifted
+	   entirely once the letters have risen. */
+	.yh-hero__title .yh-line-mask {
+		padding: 0 0.35em 0.42em 0;
+		margin: 0 -0.35em -0.42em 0;
+	}
+
 	.yh-hero__title .yh-line {
-		padding: 0 0.1em 0.1em 0;
-		margin-right: -0.1em;
+		padding: 0;
+		margin: 0;
 	}
 
 	/* SplitText wraps each glyph in its own box, so the gold gradient must be
@@ -267,7 +276,12 @@ const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
 		-webkit-background-clip: text;
 		background-clip: text;
 		color: transparent;
-		padding-right: 0.06em;
+		/* background-clip:text only paints inside each glyph's box, and italic
+		   letters overhang it (the g's loop sticks out right and below). Pad the
+		   box generously on every side and pull it back with negative margins,
+		   so the gold covers the whole glyph without moving anything. */
+		padding: 0.12em 0.3em 0.4em 0.2em;
+		margin: -0.12em -0.3em -0.4em -0.2em;
 	}
 
 	.yh-hero__meta {
@@ -485,7 +499,14 @@ const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
 					.to(img, { scale: 1, duration: 2.2 }, 0);
 			}
 			intro
-				.to(split.chars, { yPercent: 0, rotate: 0, duration: 1.3, stagger: 0.045 }, textAt)
+				.to(split.chars, {
+					yPercent: 0,
+					rotate: 0,
+					duration: 1.3,
+					stagger: 0.045,
+					// risen: drop the line clips so no glyph tail can ever be cut
+					onComplete: () => split.masks.forEach((m) => ((m as HTMLElement).style.overflow = 'visible')),
+				}, textAt)
 				.to(badge, { autoAlpha: 1, scale: 1, rotate: 0, duration: 1.4, ease: 'back.out(1.6)' }, textAt + 0.25)
 				.to(fades, { autoAlpha: 1, y: 0, duration: 1, stagger: 0.08 }, textAt + 0.35);
 

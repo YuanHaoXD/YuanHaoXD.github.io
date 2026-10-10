@@ -4,8 +4,8 @@
  * Nomadic-Tribe-style palette as the entrance (slate / cream / ink / pink).
  *
  * On `astro:before-preparation` six ink columns rise in a stagger, then the
- * destination's name rises letter by letter in a large italic serif with its
- * section index, path and a drawn gold rule. The next page is fetched in
+ * destination's name rises letter by letter in a large display face with its
+ * path and a drawn rule (no section numbers). The next page is fetched in
  * parallel. On `astro:page-load` the type exits upward and the columns
  * retract top-down, while the new <main> eases up into place.
  *
@@ -19,17 +19,14 @@ const COLS = 6;
 	<div class="pt__cols">
 		{Array.from({ length: COLS }, () => <i data-pt-col />)}
 	</div>
-	<div class="pt__big" data-pt-big>01</div>
 	<div class="pt__stage">
 		<div class="pt__meta">
-			<span class="pt__mask"><span data-pt-meta data-pt-index>(01)</span></span>
 			<span class="pt__mask"><span data-pt-meta>Now entering</span></span>
 			<span class="pt__mask"><span data-pt-meta data-pt-path>/</span></span>
 		</div>
-		<div class="pt__title" data-pt-title>Home</div>
+		<div class="pt__title" data-pt-title>About</div>
 		<div class="pt__sub">
 			<span class="pt__rule"><i data-pt-rule></i></span>
-			<span class="pt__mask"><span data-pt-meta data-pt-zh>首页</span></span>
 		</div>
 	</div>
 </div>
@@ -119,12 +116,6 @@ const COLS = 6;
 		color: var(--pt-mute);
 	}
 
-	.pt__meta [data-pt-index] {
-		color: var(--pt-ink);
-		background: var(--pt-line);
-		padding: 0 0.4em;
-	}
-
 	.pt__title {
 		margin: 0.18em 0 0.12em -0.03em;
 		font-family: 'Unbounded', 'Arial Black', sans-serif;
@@ -147,22 +138,6 @@ const COLS = 6;
 		vertical-align: top;
 	}
 
-	.pt__big {
-		position: absolute;
-		right: clamp(12px, 3vw, 48px);
-		bottom: -0.1em;
-		font-family: 'Unbounded', 'Arial Black', sans-serif;
-		font-weight: 900;
-		font-size: clamp(180px, 36vw, 600px);
-		line-height: 0.8;
-		letter-spacing: -0.02em;
-		color: transparent;
-		-webkit-text-stroke: 2px var(--pt-line);
-		opacity: 0.35;
-		pointer-events: none;
-		will-change: transform;
-	}
-
 	.pt__title .pt__ch {
 		display: inline-block;
 		will-change: transform;
@@ -172,9 +147,6 @@ const COLS = 6;
 		display: flex;
 		align-items: center;
 		gap: 18px;
-		font-family: 'Noto Serif SC', 'Songti SC', serif;
-		font-size: clamp(14px, 1.6vw, 18px);
-		letter-spacing: 0.3em;
 		color: var(--pt-ink);
 	}
 
@@ -198,26 +170,25 @@ const COLS = 6;
 <script>
 	import { gsap } from 'gsap';
 
-	type Dest = { index: string; title: string; zh: string };
+	type Dest = { title: string };
 
-	// Numbering follows the nav (Home · Blog · About); everything under the blog
-	// (posts, archive, tags) shares Blog's number.
 	const ROUTES: Array<[RegExp, Dest]> = [
-		[/^\/$/, { index: '01', title: 'Home', zh: '首页' }],
-		[/^\/blog\/(page\/\d+\/)?$/, { index: '02', title: 'Writing', zh: '写作' }],
-		[/^\/blog\/archive\/$/, { index: '02', title: 'Archive', zh: '归档' }],
-		[/^\/blog\/important\/$/, { index: '02', title: 'Featured', zh: '精选' }],
-		[/^\/blog\/.+/, { index: '02', title: 'Reading', zh: '阅读' }],
-		[/^\/tags\/$/, { index: '02', title: 'Tags', zh: '标签' }],
-		[/^\/tags\/.+/, { index: '02', title: 'Tagged', zh: '标签' }],
-		[/^\/about\//, { index: '03', title: 'About', zh: '关于' }],
-		[/^\/links\//, { index: '03', title: 'Links', zh: '友链' }],
+		[/^\/$/, { title: 'About' }],
+		[/^\/about\//, { title: 'About' }],
+		[/^\/home\//, { title: 'Home' }],
+		[/^\/blog\/(page\/\d+\/)?$/, { title: 'Writing' }],
+		[/^\/blog\/archive\/$/, { title: 'Archive' }],
+		[/^\/blog\/important\/$/, { title: 'Featured' }],
+		[/^\/blog\/.+/, { title: 'Reading' }],
+		[/^\/tags\/$/, { title: 'Tags' }],
+		[/^\/tags\/.+/, { title: 'Tagged' }],
+		[/^\/links\//, { title: 'Links' }],
 	];
 
 	const destFor = (url: URL): Dest => {
 		const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 		const path = url.pathname.replace(base, '') || '/';
-		return ROUTES.find(([re]) => re.test(path))?.[1] ?? { index: '00', title: 'Elsewhere', zh: '页面' };
+		return ROUTES.find(([re]) => re.test(path))?.[1] ?? { title: 'Elsewhere' };
 	};
 
 	const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -230,11 +201,8 @@ const COLS = 6;
 			cols: [...root.querySelectorAll<HTMLElement>('[data-pt-col]')],
 			title: root.querySelector<HTMLElement>('[data-pt-title]')!,
 			metas: [...root.querySelectorAll<HTMLElement>('[data-pt-meta]')],
-			index: root.querySelector<HTMLElement>('[data-pt-index]')!,
 			path: root.querySelector<HTMLElement>('[data-pt-path]')!,
-			zh: root.querySelector<HTMLElement>('[data-pt-zh]')!,
 			rule: root.querySelector<HTMLElement>('[data-pt-rule]')!,
-			big: root.querySelector<HTMLElement>('[data-pt-big]')!,
 			stage: root.querySelector<HTMLElement>('.pt__stage')!,
 		};
 	};
@@ -254,6 +222,29 @@ const COLS = 6;
 		return [...titleEl.querySelectorAll<HTMLElement>('.pt__ch')];
 	};
 
+	// ── The blinds and the rule run as Web Animations (transform only), so the
+	//    compositor drives them: they stay smooth even while the main thread is
+	//    busy swapping the page. The type (masked chars) uses GSAP and is timed
+	//    to be at rest before the swap happens.
+	const EXPO_IN_OUT = 'cubic-bezier(0.87, 0, 0.13, 1)';
+	let waapi: Animation[] = [];
+	const stopWaapi = () => {
+		waapi.forEach((a) => a.cancel());
+		waapi = [];
+	};
+	const run = (el: HTMLElement, frames: Keyframe[], ms: number, delayMs: number, origin: string) => {
+		el.style.transformOrigin = origin;
+		const a = el.animate(frames, { duration: ms, delay: delayMs, easing: EXPO_IN_OUT, fill: 'both' });
+		waapi.push(a);
+		return a;
+	};
+
+	// cover: blinds up by 0.7s, type at rest by ~1s; the page swaps at 1.0s,
+	// when nothing on screen is moving, so a busy swap can't show as a hitch
+	const SWAP_AT = 1.0;
+	// keep the destination title readable at least this long overall
+	const READ_UNTIL = 1.15;
+
 	let active: gsap.core.Timeline | null = null;
 
 	const cover = (to: URL) =>
@@ -261,32 +252,27 @@ const COLS = 6;
 			const e = els();
 			if (!e) return resolve();
 			const dest = destFor(to);
-			e.index.textContent = `(${dest.index})`;
 			e.path.textContent = to.pathname;
-			e.zh.textContent = dest.zh;
-			e.big.textContent = dest.index;
 			const chars = setTitle(e.title, dest.title);
 
 			active?.kill();
+			stopWaapi();
 			e.root.classList.add('is-active');
-			gsap.set(e.cols, { scaleY: 0, transformOrigin: 'bottom' });
 			// type stays hidden until the blinds are up (the padded masks would
 			// otherwise let glyph tops peek over the page)
 			gsap.set(e.stage, { autoAlpha: 0 });
 			gsap.set(chars, { yPercent: 160, rotate: 8 });
 			gsap.set(e.metas, { yPercent: 110 });
-			gsap.set(e.rule, { scaleX: 0, transformOrigin: 'left' });
-			gsap.set(e.big, { yPercent: 40, autoAlpha: 0 });
+
+			e.cols.forEach((c, i) => run(c, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], 500, i * 40, 'bottom'));
+			run(e.rule, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], 560, 420, 'left');
 
 			active = gsap
 				.timeline({ defaults: { ease: 'expo.out' } })
-				.to(e.cols, { scaleY: 1, duration: 0.5, ease: 'expo.inOut', stagger: 0.04 }, 0)
 				.set(e.stage, { autoAlpha: 1 }, 0.34)
-				.add(resolve, 0.72)
-				.to(e.metas, { yPercent: 0, duration: 0.7, stagger: 0.05 }, 0.36)
-				.to(chars, { yPercent: 0, rotate: 0, duration: 0.8, stagger: 0.03 }, 0.38)
-				.to(e.rule, { scaleX: 1, duration: 0.8, ease: 'expo.inOut' }, 0.45)
-				.to(e.big, { yPercent: 0, autoAlpha: 1, duration: 1, ease: 'expo.out' }, 0.5);
+				.to(e.metas, { yPercent: 0, duration: 0.55, stagger: 0.05 }, 0.36)
+				.to(chars, { yPercent: 0, rotate: 0, duration: 0.6, stagger: 0.025 }, 0.36)
+				.add(resolve, SWAP_AT);
 		});
 
 	const uncover = () => {
@@ -295,20 +281,23 @@ const COLS = 6;
 		const chars = [...e.title.querySelectorAll<HTMLElement>('.pt__ch')];
 		const main = document.querySelector('main');
 
-		// Keep the destination title on screen long enough to read, even when
-		// the fetch is instant.
-		const READ_UNTIL = 1.15;
 		const hold = active ? Math.max(0.05, READ_UNTIL - active.time()) : 0.05;
 		active?.kill();
+		stopWaapi();
+
+		const holdMs = hold * 1000;
+		run(e.rule, [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], 500, holdMs, 'right');
+		e.cols.forEach((c, i) =>
+			run(c, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(0)' }], 600, holdMs + 250 + i * 40, 'top'),
+		);
 
 		active = gsap
 			.timeline({ delay: hold, defaults: { ease: 'expo.in' }, onComplete: () => e.root.classList.remove('is-active') })
 			.to(chars, { yPercent: -160, rotate: -4, duration: 0.55, stagger: 0.025 }, 0)
 			.set(e.stage, { autoAlpha: 0 }, 0.6)
 			.to(e.metas, { yPercent: -110, duration: 0.5, stagger: 0.03 }, 0)
-			.to(e.rule, { scaleX: 0, transformOrigin: 'right', duration: 0.5, ease: 'expo.inOut' }, 0)
-			.to(e.big, { yPercent: -30, autoAlpha: 0, duration: 0.7, ease: 'expo.in' }, 0)
-			.to(e.cols, { scaleY: 0, transformOrigin: 'top', duration: 0.6, ease: 'expo.inOut', stagger: 0.04 }, 0.25);
+			// the blinds (WAAPI) are fully down at 0.25 + 0.6 + 5 × 0.04
+			.to({}, { duration: 1.05 }, 0);
 
 		if (main) {
 			active.fromTo(main, { y: 60, autoAlpha: 0.001 }, { y: 0, autoAlpha: 1, duration: 0.9, ease: 'expo.out', clearProps: 'transform,opacity,visibility' }, 0.4);
@@ -322,10 +311,12 @@ const COLS = 6;
 		event.loader = async () => {
 			// Fetch while the blinds close. The timeout guarantees navigation never
 			// hangs if frames are throttled (e.g. background tab).
-			const closed = Promise.race([cover(to), new Promise<void>((r) => setTimeout(r, 1200))]);
+			const closed = Promise.race([cover(to), new Promise<void>((r) => setTimeout(r, SWAP_AT * 1000 + 600))]);
 			await Promise.all([closed, originalLoader()]);
 		};
 	});
 
-	document.addEventListener('astro:page-load', uncover);
+	// let the new page's own setup (fonts, GSAP, layout) land in a frame first,
+	// so the reveal starts on a settled main thread instead of hitching
+	document.addEventListener('astro:page-load', () => requestAnimationFrame(() => requestAnimationFrame(uncover)));
 </script>

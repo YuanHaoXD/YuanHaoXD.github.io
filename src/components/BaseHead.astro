@@ -41,8 +41,20 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<!-- Keep View Transitions globally enabled so only targeted links/routes opt out when needed. -->
-<ClientRouter />
+<!--
+	Client-side routing without the browser's native View Transition: native VT
+	freezes the screen on a snapshot while the DOM swaps, which stalls the
+	curtain mid-animation. Astro checks document.startViewTransition once when
+	its router loads, so it is stashed (the theme toggle uses it) and hidden
+	before that; fallback="swap" = plain DOM swap, the curtain does the motion.
+-->
+<script is:inline>
+	if (!window.__yhSVT && typeof document.startViewTransition === 'function') {
+		window.__yhSVT = document.startViewTransition.bind(document);
+		document.startViewTransition = undefined;
+	}
+</script>
+<ClientRouter fallback="swap" />
 <!-- Favicon set generated from the original avatar (scripts/generate-brand-assets.mjs). -->
 <link rel="icon" type="image/x-icon" href={`${BASE}image/favicon.ico`} />
 <link rel="shortcut icon" href={`${BASE}image/favicon.ico`} />

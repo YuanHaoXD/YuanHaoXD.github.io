@@ -1,0 +1,366 @@
+---
+/*
+ * Side art — inked "wings" that fill the empty gutters beside the 1024px
+ * content column on wide screens, in the same Nomadic-Tribe language as the
+ * entrance.
+ *
+ * Layout rule: nothing overlaps. Each wing (viewBox 240×900, ground at 882)
+ * is split into stacked zones, and every item owns its own box:
+ *
+ *   left                         right
+ *   A  y 100–150  cloud, sparkle  A  y 100–140  cloud, sparkle
+ *   B  y 170–300  sun             B  y 165–280  moon, tiny star
+ *   C  y 345–395  cloud | star    C  y 345–395  cloud | sparkle
+ *   D  y 430–882  two pillars     D  y 455–882  star, two pillars
+ *
+ * Gaps between zones are ≥ 30 units and pillars stand ≥ 10 units apart.
+ * Floats are horizontal and stay inside their zone. Scroll parallax moves
+ * higher zones *more* (k shrinks downward, pillars are fixed), so every gap
+ * only ever grows while scrolling.
+ *
+ * The vertical captions live in their own outer strip, clear of the art.
+ * The sun and the moon are buttons: sun → light mode, moon → dark mode (the
+ * new theme spreads as a circle from the click, via Header's __yhSetTheme).
+ * `transition:persist` keeps the wings (and their animations) across swaps.
+ */
+const INK = 'currentColor';
+const SLATE = '#686e87';
+const PINK = '#e9a99a';
+const TEAL = '#8fb5b0';
+const PAPER = '#f1ece3';
+const SUN = '#f4c64e';
+
+const CLOUD = 'M0 0 H124 A18 18 0 0 0 116 -30 A24 24 0 0 0 78 -46 A30 30 0 0 0 26 -40 A20 20 0 0 0 0 0 Z';
+
+const starPoints = (cx: number, cy: number, R: number, r: number) =>
+	Array.from({ length: 10 }, (_, k) => {
+		const a = -Math.PI / 2 + (k * Math.PI) / 5;
+		const rad = k % 2 ? r : R;
+		return `${(cx + rad * Math.cos(a)).toFixed(1)},${(cy + rad * Math.sin(a)).toFixed(1)}`;
+	}).join(' ');
+
+const SUN_C = { x: 120, y: 235 };
+const sunRays = Array.from({ length: 12 }, (_, i) => {
+	const a = (i / 12) * Math.PI * 2;
+	const r1 = 44;
+	const r2 = i % 2 ? 54 : 62;
+	return {
+		x1: SUN_C.x + r1 * Math.cos(a),
+		y1: SUN_C.y + r1 * Math.sin(a),
+		x2: SUN_C.x + r2 * Math.cos(a),
+		y2: SUN_C.y + r2 * Math.sin(a),
+	};
+});
+
+const sparkle = (x: number, y: number, s = 7) => `M${x} ${y - s} v${s * 2} M${x - s} ${y} h${s * 2}`;
+---
+
+<div class="side-art" aria-hidden="true" transition:persist="side-art" data-side-art>
+	<!-- ───────────── left wing ───────────── -->
+	<svg class="side-art__svg side-art__svg--left" viewBox="0 0 240 900" preserveAspectRatio="xMidYMax meet">
+		<defs>
+			<pattern id="sa-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+				<line x1="0" y1="0" x2="0" y2="6" stroke="#231f20" stroke-width="1" opacity="0.4"></line>
+			</pattern>
+		</defs>
+
+		<!-- A · small cloud + sparkle -->
+		<g data-sa-layer="1">
+			<g data-sa-float="8" data-sa-item="L-cloud-a">
+				<path d={CLOUD} transform="translate(116 146) scale(0.6)" fill="#fbf6ef" stroke={INK} stroke-width="2.4" stroke-linejoin="round"></path>
+			</g>
+			<path data-sa-twinkle data-sa-item="L-spark-a" d={sparkle(40, 118)} stroke={INK} stroke-width="2.4" stroke-linecap="round"></path>
+		</g>
+
+		<!-- B · sun — click for light mode -->
+		<g data-sa-layer="0.7" data-sa-item="L-sun">
+			<g
+				class="side-art__toggle"
+				data-sa-toggle="light"
+				role="button"
+				tabindex="0"
+				aria-label="切换到明亮模式"
+			>
+			<title>切换到明亮模式</title>
+			<circle cx={SUN_C.x} cy={SUN_C.y} r="66" fill="transparent" class="side-art__hit"></circle>
+			<g data-sa-spin stroke={INK} stroke-width="3" stroke-linecap="round">
+				{sunRays.map((r) => <line x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} />)}
+			</g>
+			<circle cx={SUN_C.x} cy={SUN_C.y} r="34" fill={SUN} stroke={INK} stroke-width="3"></circle>
+			<path d={`M${SUN_C.x - 16} ${SUN_C.y - 8} a18 18 0 0 1 22 -12`} fill="none" stroke="#fff6d8" stroke-width="3" stroke-linecap="round"></path>
+			</g>
+		</g>
+
+		<!-- C · cloud (left half) | small star (right) -->
+		<g data-sa-layer="0.45">
+			<g data-sa-float="10" data-sa-item="L-cloud-c">
+				<path d={CLOUD} transform="translate(26 392) scale(0.8)" fill="#fbf6ef" stroke={INK} stroke-width="2.4" stroke-linejoin="round"></path>
+			</g>
+			<polygon data-sa-star data-sa-item="L-star" points={starPoints(200, 370, 18, 8)} fill={SUN} stroke={INK} stroke-width="2.5" stroke-linejoin="round"></polygon>
+		</g>
+
+		<!-- D · pillars on the ground (fixed) -->
+		<g data-sa-item="L-pillar-tall">
+			<path d="M54 880 V472 a42 42 0 0 1 84 0 V880 Z" fill={TEAL} stroke={INK} stroke-width="3"></path>
+			<path d="M54 880 V472 a42 42 0 0 1 84 0 V880 Z" fill="url(#sa-hatch)"></path>
+			<path d="M68 880 V478 a28 28 0 0 1 56 0 V880" fill="none" stroke={INK} stroke-width="1.5"></path>
+			<circle cx="96" cy="474" r="8" fill={PAPER} stroke={INK} stroke-width="2.4"></circle>
+		</g>
+		<g data-sa-item="L-pillar-short">
+			<path d="M150 880 V660 a25 25 0 0 1 50 0 V880 Z" fill={PINK} stroke={INK} stroke-width="2.5"></path>
+			<path d="M150 880 V660 a25 25 0 0 1 50 0 V880 Z" fill="url(#sa-hatch)"></path>
+		</g>
+		<path data-sa-twinkle data-sa-item="L-spark-d" d={sparkle(204, 560, 6)} stroke={INK} stroke-width="2.4" stroke-linecap="round"></path>
+		<line x1="20" y1="882" x2="232" y2="882" stroke={INK} stroke-width="3"></line>
+	</svg>
+
+	<!-- ───────────── right wing ───────────── -->
+	<svg class="side-art__svg side-art__svg--right" viewBox="0 0 240 900" preserveAspectRatio="xMidYMax meet">
+		<!-- A · small cloud + sparkle -->
+		<g data-sa-layer="1">
+			<g data-sa-float="-8" data-sa-item="R-cloud-a">
+				<path d={CLOUD} transform="translate(30 136) scale(0.55)" fill="#fbf6ef" stroke={INK} stroke-width="2.4" stroke-linejoin="round"></path>
+			</g>
+			<path data-sa-twinkle data-sa-item="R-spark-a" d={sparkle(200, 112)} stroke={INK} stroke-width="2.4" stroke-linecap="round"></path>
+		</g>
+
+		<!-- B · crescent moon + tiny star -->
+		<g data-sa-layer="0.7">
+			<g
+				class="side-art__toggle"
+				data-sa-toggle="dark"
+				role="button"
+				tabindex="0"
+				aria-label="切换到黑暗模式"
+			>
+			<title>切换到黑暗模式</title>
+			<circle cx="118" cy="222" r="62" fill="transparent" class="side-art__hit"></circle>
+			<g data-sa-rock data-sa-item="R-moon">
+				<!-- outer arc r52 via the left, inner arc r64 back: a crescent opening right (x 88–140) -->
+				<path d="M140 170 A52 52 0 0 0 140 274 A64 64 0 0 1 140 170 Z" fill="#f6e2a0" stroke={INK} stroke-width="3" stroke-linejoin="round"></path>
+				<circle cx="100" cy="212" r="3" fill={INK}></circle>
+				<circle cx="105" cy="244" r="2" fill={INK}></circle>
+			</g>
+			</g>
+			<polygon data-sa-twinkle data-sa-item="R-star-b" points={starPoints(46, 250, 11, 5)} fill={SUN} stroke={INK} stroke-width="2" stroke-linejoin="round"></polygon>
+		</g>
+
+		<!-- C · cloud (right half) | sparkle (left) -->
+		<g data-sa-layer="0.45">
+			<g data-sa-float="-10" data-sa-item="R-cloud-c">
+				<path d={CLOUD} transform="translate(106 392) scale(0.8)" fill="#fbf6ef" stroke={INK} stroke-width="2.4" stroke-linejoin="round"></path>
+			</g>
+			<path data-sa-twinkle data-sa-item="R-spark-c" d={sparkle(40, 372, 6)} stroke={INK} stroke-width="2.4" stroke-linecap="round"></path>
+		</g>
+
+		<!-- D · stars beside the pillars, pillars on the ground (fixed) -->
+		<polygon data-sa-twinkle data-sa-item="R-star-d" points={starPoints(212, 500, 9, 4)} fill={SUN} stroke={INK} stroke-width="2" stroke-linejoin="round"></polygon>
+		<polygon data-sa-twinkle data-sa-item="R-star-d2" points={starPoints(56, 600, 7, 3)} fill={PAPER} stroke={INK} stroke-width="2" stroke-linejoin="round"></polygon>
+		<g data-sa-item="R-pillar-short">
+			<path d="M34 880 V680 a24 24 0 0 1 48 0 V880 Z" fill={SLATE} stroke={INK} stroke-width="2.5"></path>
+			<path d="M34 880 V680 a24 24 0 0 1 48 0 V880 Z" fill="url(#sa-hatch)"></path>
+		</g>
+		<g data-sa-item="R-pillar-tall">
+			<path d="M100 880 V510 a42 42 0 0 1 84 0 V880 Z" fill={PINK} stroke={INK} stroke-width="3"></path>
+			<path d="M100 880 V510 a42 42 0 0 1 84 0 V880 Z" fill="url(#sa-hatch)"></path>
+			<path d="M114 880 V516 a28 28 0 0 1 56 0 V880" fill="none" stroke={INK} stroke-width="1.5"></path>
+			<circle cx="142" cy="512" r="8" fill={PAPER} stroke={INK} stroke-width="2.4"></circle>
+		</g>
+		<line x1="8" y1="882" x2="220" y2="882" stroke={INK} stroke-width="3"></line>
+	</svg>
+
+	<p class="side-art__caption side-art__caption--left">Think · Build · Record — 2026</p>
+	<p class="side-art__caption side-art__caption--right">YuanHao · A small archive</p>
+</div>
+
+<style is:global>
+	.side-art {
+		display: none;
+	}
+
+	/* each gutter = (viewport − 1024px content) / 2; show once it's ≥ ~158px */
+	@media (min-width: 1340px) {
+		.side-art {
+			--sa-gutter: calc((100vw - 1024px) / 2);
+			/* art box: clear of the caption strip (outer 26px) and the content (inner 22px) */
+			--sa-w: min(calc(var(--sa-gutter) - 48px), 300px);
+			display: block;
+			position: fixed;
+			inset: 64px 0 0 0;
+			z-index: 0;
+			pointer-events: none;
+			color: #231f20;
+		}
+
+		/* stand the wings above the music player (buttons + its pop-up card reach
+		   128px up from the bottom-right corner); both sides match for symmetry */
+		.side-art__svg {
+			position: absolute;
+			bottom: 136px;
+			width: var(--sa-w);
+			height: calc(100% - 148px);
+			overflow: visible;
+		}
+
+		.side-art__svg--left {
+			left: max(26px, calc((var(--sa-gutter) - var(--sa-w)) / 2));
+		}
+
+		.side-art__svg--right {
+			right: max(26px, calc((var(--sa-gutter) - var(--sa-w)) / 2));
+		}
+
+		/* captions sit in their own 26px outer strip */
+		.side-art__caption {
+			position: absolute;
+			top: 50%;
+			margin: 0;
+			font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+			font-size: 10px;
+			line-height: 1;
+			letter-spacing: 0.32em;
+			text-transform: uppercase;
+			white-space: nowrap;
+			opacity: 0.55;
+		}
+
+		.side-art__caption--left {
+			left: 8px;
+			transform: rotate(-90deg) translate(-50%, 0);
+			transform-origin: 0 0;
+		}
+
+		.side-art__caption--right {
+			right: 8px;
+			transform: rotate(90deg) translate(50%, 0);
+			transform-origin: 100% 0;
+		}
+
+		/* keep page content above the wings */
+		main,
+		footer {
+			position: relative;
+			z-index: 1;
+		}
+	}
+
+	/* sun & moon are the only interactive parts of the wings */
+	.side-art__toggle {
+		pointer-events: auto;
+		cursor: pointer;
+		outline: none;
+		transform-box: fill-box;
+		transform-origin: center;
+		transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s, opacity 0.4s;
+	}
+
+	.side-art__hit {
+		pointer-events: all;
+	}
+
+	.side-art__toggle:hover,
+	.side-art__toggle:focus-visible {
+		transform: scale(1.08);
+	}
+
+	.side-art__toggle:focus-visible {
+		filter: drop-shadow(0 0 0 #231f20) drop-shadow(0 0 6px rgba(104, 110, 135, 0.8));
+	}
+
+	/* the one that matches the current mode glows; the other rests a little dimmer */
+	html:not(.dark) [data-sa-toggle='light'] {
+		filter: drop-shadow(0 0 14px rgba(244, 198, 78, 0.65));
+	}
+
+	html.dark [data-sa-toggle='dark'] {
+		filter: drop-shadow(0 0 14px rgba(246, 226, 160, 0.55));
+	}
+
+	html:not(.dark) [data-sa-toggle='dark'],
+	html.dark [data-sa-toggle='light'] {
+		opacity: 0.78;
+	}
+
+	html.dark .side-art {
+		color: #e9e2d5;
+	}
+
+	html.dark .side-art__svg {
+		opacity: 0.85;
+	}
+</style>
+
+<script>
+	import { gsap } from 'gsap';
+
+	const SPREAD = 40; // max scroll drift, in viewBox units, for the top zone
+
+	const init = () => {
+		const root = document.querySelector<HTMLElement>('[data-side-art]');
+		if (!root || root.dataset.bound === 'true') return;
+		root.dataset.bound = 'true';
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		const $$ = <T extends Element = SVGElement>(s: string) => [...root.querySelectorAll<T>(s)];
+
+		// idle life — horizontal floats only, so items never drift into the zone above/below
+		$$('[data-sa-float]').forEach((g, i) => {
+			const dx = Number(g.getAttribute('data-sa-float')) || 8;
+			gsap.fromTo(g, { x: -dx / 2 }, { x: dx / 2, duration: 4 + i * 0.7, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+		});
+		$$('[data-sa-spin]').forEach((g) => gsap.to(g, { rotation: 360, svgOrigin: '120 235', duration: 60, ease: 'none', repeat: -1 }));
+		$$('[data-sa-star]').forEach((g) => gsap.to(g, { rotation: 360, transformOrigin: '50% 55%', duration: 18, ease: 'none', repeat: -1 }));
+		$$('[data-sa-rock]').forEach((g) => gsap.to(g, { rotation: -6, transformOrigin: '50% 50%', duration: 5, ease: 'sine.inOut', yoyo: true, repeat: -1 }));
+		$$('[data-sa-twinkle]').forEach((g, i) =>
+			gsap.fromTo(
+				g,
+				{ scale: 0.6, opacity: 0.5, transformOrigin: '50% 50%' },
+				{ scale: 1, opacity: 1, duration: 1.1 + (i % 3) * 0.4, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.3 },
+			),
+		);
+
+		// sun → light, moon → dark (shared switch lives in Header.astro)
+		$$<SVGGElement>('[data-sa-toggle]').forEach((t) => {
+			const wantDark = t.dataset.saToggle === 'dark';
+			const fire = (x?: number, y?: number) => {
+				const r = t.getBoundingClientRect();
+				gsap.fromTo(t, { scale: 0.86, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.45)', clearProps: 'transform' });
+				(window as any).__yhSetTheme?.(wantDark, x ?? r.left + r.width / 2, y ?? r.top + r.height / 2);
+			};
+			t.addEventListener('click', (e) => fire(e.clientX, e.clientY));
+			t.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					fire();
+				}
+			});
+		});
+
+		// scroll parallax: higher zones drift up more, so the gaps between zones only widen
+		const layers = $$('[data-sa-layer]').map((g) => ({ g, k: Number(g.getAttribute('data-sa-layer')) || 0 }));
+		const onScroll = () => {
+			const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+			const p = Math.min(1, window.scrollY / max);
+			layers.forEach(({ g, k }) => gsap.to(g, { y: -p * SPREAD * k, duration: 0.6, ease: 'power2.out', overwrite: 'auto' }));
+		};
+		window.addEventListener('scroll', onScroll, { passive: true });
+		document.addEventListener('astro:page-load', onScroll);
+		onScroll();
+
+		// pointer parallax: both wings lean a few pixels toward the cursor
+		if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+			const movers = $$<SVGSVGElement>('.side-art__svg').map((s) => gsap.quickTo(s, 'x', { duration: 1.4, ease: 'power3.out' }));
+			window.addEventListener(
+				'pointermove',
+				(e) => {
+					const px = e.clientX / window.innerWidth - 0.5;
+					movers.forEach((m) => m(px * 8));
+				},
+				{ passive: true },
+			);
+		}
+	};
+
+	init();
+	document.addEventListener('astro:page-load', init);
+</script>

@@ -3,7 +3,9 @@ import { GITHUB_URL, SITE_TITLE } from '../consts';
 import { getNavLinks } from '../data/navLinks';
 import BrandMark from './BrandMark.astro';
 import HeaderLink from './HeaderLink.astro';
+import MusicPlayer from './MusicPlayer.astro';
 import PageCurtain from './PageCurtain.astro';
+import SideArt from './SideArt.astro';
 import Splash from './Splash.astro';
 
 
@@ -26,6 +28,8 @@ const { showTocButton = false } = Astro.props as Props;
 
 <Splash />
 <PageCurtain />
+<SideArt />
+<MusicPlayer />
 
 <header class="site-header sticky top-0 z-50 border-b border-zinc-200/70 bg-zinc-50/72 backdrop-blur-xl transition-colors duration-200 dark:border-zinc-800/80 dark:bg-zinc-950/72">
 	<nav class="page-shell flex h-16 items-center justify-between gap-4">
@@ -269,90 +273,84 @@ const { showTocButton = false } = Astro.props as Props;
 <script is:inline>
 	// Block scope: inline scripts re-run on every client-side navigation.
 	{
+	const root = document.documentElement;
+	const storageKey = 'theme';
+
+	const updateThemeButtons = () => {
+		const isDark = root.classList.contains('dark');
+		document.querySelectorAll('[id="theme-toggle"], [id="theme-toggle-mobile"]').forEach((button) => {
+			button.setAttribute('aria-pressed', String(isDark));
+			const icon = button.querySelector('[data-theme-icon]');
+			if (icon) icon.classList.toggle('rotate-180', isDark);
+		});
+	};
+
+	/*
+	 * Shared theme switch: the header button and the side-art sun/moon all call
+	 * this. The new theme expands as a circle from (x, y) — the click point.
+	 */
+	window.__yhSetTheme = (wantDark, x, y) => {
+		if (root.classList.contains('dark') === wantDark) return;
+		const applyTheme = () => {
+			root.classList.toggle('dark', wantDark);
+			root.dataset.theme = wantDark ? 'dark' : 'light';
+			localStorage.setItem(storageKey, wantDark ? 'dark' : 'light');
+			if (typeof window.__syncThemeColor === 'function') window.__syncThemeColor(wantDark);
+			updateThemeButtons();
+		};
+
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		// the native View Transition is kept aside for this (see BaseHead)
+		const startVT = window.__yhSVT;
+		if (typeof startVT !== 'function' || reducedMotion) {
+			applyTheme();
+			return;
+		}
+
+		const cx = x ?? window.innerWidth / 2;
+		const cy = y ?? window.innerHeight / 2;
+		const endRadius = Math.hypot(Math.max(cx, window.innerWidth - cx), Math.max(cy, window.innerHeight - cy));
+
+		root.classList.add('theme-vt');
+		const transition = startVT(applyTheme);
+		transition.ready
+			.then(() => {
+				document.documentElement.animate(
+					{ clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${endRadius}px at ${cx}px ${cy}px)`] },
+					{ duration: 600, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', pseudoElement: '::view-transition-new(root)' }
+				);
+			})
+			.catch(() => {});
+		transition.finished.catch(() => {}).finally(() => root.classList.remove('theme-vt'));
+	};
+
 	const initThemeToggle = () => {
 		const buttons = Array.from(document.querySelectorAll('[id="theme-toggle"], [id="theme-toggle-mobile"]'));
 		if (!buttons.length) return;
 
-		const root = document.documentElement;
-		const storageKey = 'theme';
 		const applyStoredTheme = () => {
 			const stored = localStorage.getItem(storageKey);
 			const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			const theme = stored === 'dark' || stored === 'light'
-				? stored
-				: (systemPrefersDark ? 'dark' : 'light');
+			const theme = stored === 'dark' || stored === 'light' ? stored : systemPrefersDark ? 'dark' : 'light';
 			root.classList.toggle('dark', theme === 'dark');
 			root.dataset.theme = theme;
 			// Route swaps restore the static head, so re-sync the browser chrome color.
 			if (typeof window.__syncThemeColor === 'function') window.__syncThemeColor(theme === 'dark');
-			return theme === 'dark';
-		};
-
-		const updateAria = () => {
-			const isDark = root.classList.contains('dark');
-			buttons.forEach((button) => {
-				button.setAttribute('aria-pressed', String(isDark));
-				const icon = button.querySelector('[data-theme-icon]');
-				if (icon) {
-					icon.classList.toggle('rotate-180', isDark);
-				}
-			});
 		};
 
 		buttons.forEach((button) => {
 			if (button.dataset.bound === 'true') return;
 			button.dataset.bound = 'true';
 			button.addEventListener('click', (event) => {
-				const applyTheme = () => {
-					const isDark = root.classList.toggle('dark');
-					root.dataset.theme = isDark ? 'dark' : 'light';
-					localStorage.setItem(storageKey, isDark ? 'dark' : 'light');
-					if (typeof window.__syncThemeColor === 'function') window.__syncThemeColor(isDark);
-					updateAria();
-				};
-
-				const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-				if (typeof document.startViewTransition !== 'function' || reducedMotion) {
-					applyTheme();
-					return;
-				}
-
-				// Expand the new theme as a circle from the click point for a tactile switch feel.
 				const rect = button.getBoundingClientRect();
 				const x = event.clientX || rect.left + rect.width / 2;
 				const y = event.clientY || rect.top + rect.height / 2;
-				const endRadius = Math.hypot(
-					Math.max(x, window.innerWidth - x),
-					Math.max(y, window.innerHeight - y)
-				);
-
-				root.classList.add('theme-vt');
-				const transition = document.startViewTransition(applyTheme);
-				transition.ready
-					.then(() => {
-						document.documentElement.animate(
-							{
-								clipPath: [
-									`circle(0px at ${x}px ${y}px)`,
-									`circle(${endRadius}px at ${x}px ${y}px)`,
-								],
-							},
-							{
-								duration: 500,
-								easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-								pseudoElement: '::view-transition-new(root)',
-							}
-						);
-					})
-					.catch(() => {});
-				transition.finished
-					.catch(() => {})
-					.finally(() => root.classList.remove('theme-vt'));
+				window.__yhSetTheme(!root.classList.contains('dark'), x, y);
 			});
 		});
 
 		applyStoredTheme();
-		updateAria();
+		updateThemeButtons();
 	};
 
 	initThemeToggle();
@@ -360,54 +358,4 @@ const { showTocButton = false } = Astro.props as Props;
 	document.addEventListener('astro:page-load', initThemeToggle);
 	document.addEventListener('astro:after-swap', initThemeToggle);
 	}
-
-	// RSS Dropdown
-	const initRssDropdown = () => {
-		const rssDropdown = document.getElementById('rss-dropdown');
-		const rssButton = document.getElementById('rss-button');
-		const rssMenu = document.getElementById('rss-menu');
-
-		if (!rssDropdown || !rssButton || !rssMenu) return;
-
-		// Prevent double binding
-		if (rssButton.dataset.rssBound === 'true') return;
-		rssButton.dataset.rssBound = 'true';
-
-		const toggleDropdown = (e) => {
-			e.stopPropagation();
-			const isExpanded = rssButton.getAttribute('aria-expanded') === 'true';
-			rssButton.setAttribute('aria-expanded', String(!isExpanded));
-			if (isExpanded) {
-				rssMenu.classList.add('hidden');
-			} else {
-				rssMenu.classList.remove('hidden');
-			}
-		};
-
-		const closeDropdown = () => {
-			rssButton.setAttribute('aria-expanded', 'false');
-			rssMenu.classList.add('hidden');
-		};
-
-		// Click to toggle on all devices (mobile-friendly)
-		rssButton.addEventListener('click', toggleDropdown);
-
-		// Close when clicking outside
-		document.addEventListener('click', (e) => {
-			if (!rssDropdown.contains(e.target)) {
-				closeDropdown();
-			}
-		});
-
-		// Close on Escape
-		document.addEventListener('keydown', (e) => {
-			if (e.key === 'Escape' && !rssMenu.classList.contains('hidden')) {
-				closeDropdown();
-			}
-		});
-	};
-
-	initRssDropdown();
-	document.addEventListener('astro:page-load', initRssDropdown);
-	document.addEventListener('astro:after-swap', initRssDropdown);
 </script>

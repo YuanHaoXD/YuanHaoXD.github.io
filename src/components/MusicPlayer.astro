@@ -1,344 +1,454 @@
 ---
-// 极简浮动音乐播放器 — 收起是小胶囊，展开是小卡片
+/*
+ * Music player — an ink-line record in the bottom-right corner.
+ *
+ * - Never starts on its own: music plays only after a click here, or on the
+ *   intro's "带声音进入" button (Splash.astro calls window.__yhMusic).
+ * - One click = one action: play ⇄ pause, with a short volume fade each way.
+ * - Mounted once in Header with `transition:persist`, so the record keeps
+ *   spinning (and the song keeps going) across page swaps.
+ * - Title and progress open beside the record on hover / focus (on touch,
+ *   for a moment after each tap). Stays in one low row, under the side art.
+ */
+const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 ---
 
-<div id="music-player" class="music-player">
-	<audio id="audio-el" preload="metadata" src="/audio/summer.mp3"></audio>
+<div class="mp" data-mp transition:persist="music-player">
+	<audio data-mp-audio preload="metadata" src={SRC}></audio>
 
-	<!-- 播放卡片（展开时显示） -->
-	<div class="m-card" id="m-card">
-		<div class="m-vinyl">
-			<div class="m-vinyl-dot"></div>
+	<div class="mp__panel" data-mp-panel>
+		<div class="mp__meta">
+			<span class="mp__title">Summer</span>
+			<span class="mp__sub">菊次郎的夏天</span>
 		</div>
-		<div class="m-meta">
-			<div class="m-title">Summer</div>
-			<div class="m-sub">菊次郎的夏天</div>
-			<div class="m-progress" id="m-progress">
-				<div class="m-progress-fill" id="m-fill"></div>
-			</div>
-			<div class="m-times">
-				<span id="m-cur">0:00</span>
-				<span id="m-dur">2:34</span>
-			</div>
+		<div
+			class="mp__track"
+			data-mp-track
+			role="slider"
+			tabindex="0"
+			aria-label="播放进度"
+			aria-valuemin="0"
+			aria-valuemax="100"
+			aria-valuenow="0"
+		>
+			<i data-mp-fill></i>
+		</div>
+		<div class="mp__times">
+			<span data-mp-cur>0:00</span>
+			<span data-mp-dur>2:34</span>
 		</div>
 	</div>
 
-	<!-- 小胶囊按钮组 -->
-	<div class="m-btn-group">
-		<button id="m-replay" class="m-btn-sm" aria-label="重新播放" title="重新播放">
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<polyline points="1 4 1 10 7 10"/>
-				<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-			</svg>
-		</button>
-		<button id="m-btn" class="m-btn" aria-label="播放音乐">
-		<svg class="m-play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-		<svg class="m-pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+	<span class="mp__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+
+	<button class="mp__disc" type="button" data-mp-toggle aria-pressed="false" aria-label="播放音乐" title="播放音乐">
+		<svg viewBox="0 0 48 48" aria-hidden="true">
+			<g class="mp__spin">
+				<circle cx="24" cy="24" r="21" fill="#2b2726"></circle>
+				<circle cx="24" cy="24" r="17" fill="none" stroke="#4f4943" stroke-width="1"></circle>
+				<circle cx="24" cy="24" r="14" fill="none" stroke="#4f4943" stroke-width="1"></circle>
+				<!-- the sheen and the label notch make the spin readable -->
+				<path d="M10 17 A15.5 15.5 0 0 1 17 10" fill="none" stroke="#f1ece3" stroke-width="1.6" stroke-linecap="round" opacity="0.55"></path>
+				<circle cx="24" cy="24" r="10" fill="#f4c64e" stroke="#231f20" stroke-width="1.5"></circle>
+				<circle cx="24" cy="16.6" r="1.3" fill="#231f20"></circle>
+			</g>
+			<g class="mp__glyph" fill="#231f20">
+				<path class="mp__play" d="M21.4 19.6 L29 24 L21.4 28.4 Z"></path>
+				<path class="mp__pause" d="M20.2 19.8 h2.8 v8.4 h-2.8 Z M25 19.8 h2.8 v8.4 H25 Z"></path>
+			</g>
+		</svg>
 	</button>
 </div>
 
 <style is:global>
-	#music-player {
+	.mp {
 		position: fixed;
-		bottom: 1.25rem;
 		right: 1.25rem;
+		bottom: 1.25rem;
 		z-index: 9999;
-	}
-
-	/* ===== 按钮组容器 ===== */
-	.m-btn-group {
-		position: relative;
-		z-index: 2;
 		display: flex;
 		align-items: center;
-		gap: 0.35rem;
-	}
-
-	/* ===== 小胶囊按钮 ===== */
-	.m-btn {
-		position: relative;
-		z-index: 2;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.25rem;
-		height: 2.25rem;
-		border-radius: 50%;
-		border: 1px solid rgba(0,0,0,0.06);
-		background: rgba(255,255,255,0.55);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		color: rgba(0,0,0,0.55);
-		cursor: pointer;
-		transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
-	}
-	.m-btn:hover {
-		background: rgba(255,255,255,0.75);
-		color: rgba(0,0,0,0.8);
-		transform: scale(1.05);
-	}
-	.m-btn:active { transform: scale(0.92); }
-
-	/* ===== 重播按钮 ===== */
-	.m-btn-sm {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.6rem;
-		height: 1.6rem;
-		border-radius: 50%;
-		border: 1px solid rgba(0,0,0,0.06);
-		background: rgba(255,255,255,0.5);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
-		color: rgba(0,0,0,0.4);
-		cursor: pointer;
-		transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
-	}
-	.m-btn-sm svg { width: 0.7rem; height: 0.7rem; }
-	.m-btn-sm:hover {
-		background: rgba(255,255,255,0.7);
-		color: rgba(0,0,0,0.65);
-		transform: scale(1.05);
-	}
-	.m-btn-sm:active { transform: scale(0.9); }
-
-	html.dark .m-btn-sm {
-		background: rgba(255,255,255,0.06);
-		border-color: rgba(255,255,255,0.08);
-		color: rgba(255,255,255,0.35);
-	}
-	html.dark .m-btn-sm:hover {
-		background: rgba(255,255,255,0.1);
-		color: rgba(255,255,255,0.6);
-	}
-
-	/* 重播按钮始终显示 */
-	.m-btn-sm { display: flex !important; }
-
-	.m-play-icon, .m-pause-icon {
-		width: 0.85rem; height: 0.85rem;
-	}
-	.m-pause-icon { display: none; }
-	.is-playing .m-play-icon { display: none; }
-	.is-playing .m-pause-icon { display: block; }
-	/* paused 状态：显示播放图标 */
-	.is-paused .m-play-icon { display: block; }
-	.is-paused .m-pause-icon { display: none; }
-
-	/* ===== 展开卡片 ===== */
-	.m-card {
-		position: absolute;
-		bottom: 2.75rem;
-		right: 0;
-		display: flex;
-		gap: 0.75rem;
-		padding: 0.7rem 0.85rem;
-		border-radius: 1rem;
-		border: 1px solid rgba(0,0,0,0.05);
-		background: rgba(255,255,255,0.62);
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
-		box-shadow: 0 8px 28px rgba(0,0,0,0.08);
-		opacity: 0;
-		transform: translateY(6px) scale(0.95);
-		transform-origin: bottom right;
+		gap: 0.5rem;
+		/* only the parts themselves catch the pointer */
 		pointer-events: none;
-		transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
 	}
 
-	.is-expanded .m-card {
-		opacity: 1;
-		transform: translateY(0) scale(1);
+	.mp > * {
 		pointer-events: auto;
 	}
 
-	/* ===== 迷你黑胶 ===== */
-	.m-vinyl {
-		flex-shrink: 0;
-		width: 2.5rem;
-		height: 2.5rem;
+	/* ── the record ───────────────────────────────── */
+	.mp__disc {
+		display: grid;
+		place-items: center;
+		width: 3rem;
+		height: 3rem;
+		padding: 0;
+		border: 2px solid var(--line, #231f20);
 		border-radius: 50%;
-		background: radial-gradient(circle, #1a1a1a 30%, #2a2a2a 31%, #1e1e1e 33%, #252525 35%, #1c1c1c 100%);
-		position: relative;
-		box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
-	}
-	.is-playing .m-vinyl {
-		animation: m-spin 4s linear infinite;
-	}
-	@keyframes m-spin {
-		to { transform: rotate(360deg); }
-	}
-	.m-vinyl-dot {
-		position: absolute;
-		top: 50%; left: 50%;
-		transform: translate(-50%,-50%);
-		width: 0.6rem; height: 0.6rem;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #c08828, #e6c878);
-	}
-
-	/* ===== 歌曲信息 ===== */
-	.m-meta {
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-	}
-	.m-title {
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: rgba(0,0,0,0.75);
-		line-height: 1.2;
-	}
-	.m-sub {
-		font-size: 0.6rem;
-		color: rgba(0,0,0,0.35);
-		line-height: 1.3;
-		margin-bottom: 0.3rem;
-	}
-
-	/* ===== 迷你进度条 ===== */
-	.m-progress {
-		width: 7rem;
-		height: 2px;
-		border-radius: 1px;
-		background: rgba(0,0,0,0.08);
+		background: var(--card, #fbf7f0);
+		box-shadow: 3px 3px 0 var(--line, #231f20);
 		cursor: pointer;
+		transition:
+			transform 0.15s,
+			box-shadow 0.15s;
 	}
-	.m-progress-fill {
+
+	.mp__disc:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 4px 4px 0 var(--line, #231f20);
+	}
+
+	.mp__disc:active {
+		transform: translate(2px, 2px);
+		box-shadow: 0 0 0 var(--line, #231f20);
+	}
+
+	.mp__disc:focus-visible {
+		outline: 2px dashed var(--slate, #686e87);
+		outline-offset: 4px;
+	}
+
+	.mp__disc svg {
+		width: 100%;
 		height: 100%;
-		border-radius: 1px;
-		background: linear-gradient(90deg, #c08828, #e6c878);
-		width: 0%;
-		transition: width 0.2s linear;
+		overflow: visible;
 	}
-	.m-times {
+
+	.mp__spin {
+		transform-box: view-box;
+		transform-origin: 24px 24px;
+		animation: mp-spin 5s linear infinite;
+		/* paused, it simply stops where it is */
+		animation-play-state: paused;
+	}
+
+	.mp.is-playing .mp__spin {
+		animation-play-state: running;
+	}
+
+	@keyframes mp-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.mp__pause,
+	.mp.is-playing .mp__play {
+		display: none;
+	}
+
+	.mp.is-playing .mp__pause {
+		display: inline;
+	}
+
+	/* ── the little equaliser (only while playing) ── */
+	.mp__eq {
+		display: flex;
+		align-items: flex-end;
+		gap: 2px;
+		width: 0;
+		height: 1rem;
+		overflow: hidden;
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 0.3s;
+	}
+
+	.mp.is-playing .mp__eq {
+		width: 13px;
+		opacity: 1;
+	}
+
+	.mp__eq i {
+		width: 3px;
+		height: 30%;
+		border-radius: 1px;
+		background: var(--ink, #231f20);
+	}
+
+	.mp.is-playing .mp__eq i {
+		animation: mp-eq 0.9s ease-in-out infinite alternate;
+	}
+
+	.mp.is-playing .mp__eq i:nth-child(2) {
+		animation-duration: 0.65s;
+		animation-delay: -0.3s;
+	}
+
+	.mp.is-playing .mp__eq i:nth-child(3) {
+		animation-duration: 1.1s;
+		animation-delay: -0.6s;
+	}
+
+	@keyframes mp-eq {
+		0% {
+			height: 25%;
+		}
+		100% {
+			height: 100%;
+		}
+	}
+
+	/* ── the panel: title + progress, beside the record ── */
+	.mp__panel {
+		display: grid;
+		gap: 0.3rem;
+		width: 10.5rem;
+		padding: 0.55rem 0.75rem 0.5rem;
+		border: 2px solid var(--line, #231f20);
+		border-radius: 0.9rem;
+		background: var(--card, #fbf7f0);
+		box-shadow: 3px 3px 0 var(--line, #231f20);
+		color: var(--on-card, #231f20);
+		opacity: 0;
+		visibility: hidden;
+		transform: translateX(10px);
+		/* hidden = not hit-testable; closing waits a beat so the pointer can
+		   cross the gap from the record */
+		transition:
+			opacity 0.25s 0.25s,
+			transform 0.3s 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+			visibility 0s 0.55s;
+	}
+
+	.mp:hover .mp__panel,
+	.mp:has(:focus-visible) .mp__panel,
+	.mp.is-peek .mp__panel {
+		opacity: 1;
+		visibility: visible;
+		transform: none;
+		transition:
+			opacity 0.25s,
+			transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+			visibility 0s;
+	}
+
+	/* hover only opens it on devices that really hover */
+	@media (hover: none) {
+		.mp:hover:not(.is-peek):not(:has(:focus-visible)) .mp__panel {
+			opacity: 0;
+			visibility: hidden;
+		}
+	}
+
+	.mp__meta {
+		display: flex;
+		align-items: baseline;
+		gap: 0.4rem;
+		min-width: 0;
+		white-space: nowrap;
+	}
+
+	.mp__title {
+		font-family: 'Unbounded', 'Arial Black', sans-serif;
+		font-weight: 900;
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.mp__sub {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		font-size: 0.66rem;
+		opacity: 0.6;
+	}
+
+	.mp__track {
+		position: relative;
+		height: 6px;
+		border: 1.5px solid var(--line, #231f20);
+		border-radius: 999px;
+		background: transparent;
+		cursor: pointer;
+		outline: none;
+	}
+
+	.mp__track:focus-visible {
+		outline: 2px dashed var(--slate, #686e87);
+		outline-offset: 3px;
+	}
+
+	.mp__track i {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 0%;
+		border-radius: 999px;
+		background: var(--sun, #f4c64e);
+	}
+
+	.mp__times {
 		display: flex;
 		justify-content: space-between;
-		margin-top: 0.15rem;
-		font-size: 0.55rem;
-		color: rgba(0,0,0,0.3);
+		font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+		font-size: 0.6rem;
 		font-variant-numeric: tabular-nums;
+		opacity: 0.65;
 	}
-
-	/* ===== 暗色 ===== */
-	html.dark .m-btn {
-		background: rgba(255,255,255,0.07);
-		border-color: rgba(255,255,255,0.08);
-		color: rgba(255,255,255,0.5);
-	}
-	html.dark .m-btn:hover {
-		background: rgba(255,255,255,0.12);
-		color: rgba(255,255,255,0.75);
-	}
-	html.dark .m-card {
-		background: rgba(30,30,32,0.65);
-		border-color: rgba(255,255,255,0.06);
-		box-shadow: 0 8px 28px rgba(0,0,0,0.2);
-	}
-	html.dark .m-title { color: rgba(255,255,255,0.75); }
-	html.dark .m-sub { color: rgba(255,255,255,0.3); }
-	html.dark .m-progress { background: rgba(255,255,255,0.08); }
-	html.dark .m-times { color: rgba(255,255,255,0.25); }
 
 	@media (max-width: 640px) {
-		#music-player { bottom: 0.75rem; right: 0.75rem; }
-		.m-btn { width: 2rem; height: 2rem; }
-		.m-card { padding: 0.6rem 0.7rem; gap: 0.6rem; bottom: 2.5rem; }
-		.m-vinyl { width: 2.2rem; height: 2.2rem; }
-		.m-progress { width: 5.5rem; }
-		.m-title { font-size: 0.7rem; }
+		.mp {
+			right: 0.85rem;
+			bottom: 0.85rem;
+		}
+		.mp__disc {
+			width: 2.6rem;
+			height: 2.6rem;
+		}
+		.mp__panel {
+			width: 9.5rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.mp__spin,
+		.mp.is-playing .mp__eq i {
+			animation: none;
+		}
+	}
+
+	@media print {
+		.mp {
+			display: none;
+		}
 	}
 </style>
 
-<script is:inline>
-	(() => {
-		const btn = document.getElementById('m-btn');
-		const audio = document.getElementById('audio-el');
-		const player = document.getElementById('music-player');
-		const fill = document.getElementById('m-fill');
-		const prog = document.getElementById('m-progress');
-		const cur = document.getElementById('m-cur');
-		const dur = document.getElementById('m-dur');
+<script>
+	const MAX_VOL = 0.8;
 
-		const fmt = (s) => {
-			if (!s || isNaN(s)) return '0:00';
-			const m = Math.floor(s / 60);
-			const sec = Math.floor(s % 60);
-			return m + ':' + String(sec).padStart(2,'0');
+	const init = () => {
+		const w = window as any;
+		if (w.__yhMusic) return;
+		const root = document.querySelector<HTMLElement>('[data-mp]');
+		if (!root) return;
+
+		const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+		const audio = $<HTMLAudioElement>('[data-mp-audio]');
+		const toggle = $<HTMLButtonElement>('[data-mp-toggle]');
+		const track = $('[data-mp-track]');
+		const fill = $('[data-mp-fill]');
+		const cur = $('[data-mp-cur]');
+		const dur = $('[data-mp-dur]');
+
+		const fmt = (s: number) => {
+			if (!s || !Number.isFinite(s)) return '0:00';
+			return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 		};
 
-		// 三态循环：
-		// 0. idle（初始）→ 点击 → playing + 卡片弹出
-		// 1. playing + 卡片展开 → 点击 → playing + 卡片收回（音乐不停）
-		// 2. playing + 卡片收回 → 点击 → paused（暂停）
-		// 3. paused → 点击 → 回到 playing + 卡片弹出
-		let state = 0; // 0=idle, 1=playing+expanded, 2=playing+collapsed, 3=paused
-
-		btn.addEventListener('click', () => {
-			switch (state) {
-				case 0: // idle → 播放 + 弹出
-				case 3: // paused → 播放 + 弹出
-					audio.play();
-					player.classList.add('is-playing');
-					player.classList.remove('is-paused');
-					player.classList.add('is-expanded');
-					state = 1;
-					break;
-				case 1: // 播放+展开 → 收回（音乐不停）
-					player.classList.remove('is-expanded');
-					state = 2;
-					break;
-				case 2: // 播放+收回 → 暂停
-					audio.pause();
-					player.classList.remove('is-playing');
-					player.classList.add('is-paused');
-					player.classList.remove('is-expanded');
-					state = 3;
-					break;
+		// ── volume fades (smoothstep), so starts and stops never jolt
+		let fadeRaf = 0;
+		const fadeTo = (target: number, ms: number, done?: () => void) => {
+			cancelAnimationFrame(fadeRaf);
+			if (document.hidden || ms <= 0) {
+				audio.volume = target;
+				done?.();
+				return;
 			}
-		});
+			const from = audio.volume;
+			const t0 = performance.now();
+			const step = (now: number) => {
+				const k = Math.min(1, (now - t0) / ms);
+				audio.volume = from + (target - from) * k * k * (3 - 2 * k);
+				if (k < 1) fadeRaf = requestAnimationFrame(step);
+				else done?.();
+			};
+			fadeRaf = requestAnimationFrame(step);
+		};
 
-		audio.addEventListener('timeupdate', () => {
-			if (!audio.duration) return;
-			const pct = (audio.currentTime / audio.duration) * 100;
-			fill.style.width = pct + '%';
+		let playing = false;
+		const setState = (on: boolean) => {
+			playing = on;
+			root.classList.toggle('is-playing', on);
+			const label = on ? '暂停音乐' : '播放音乐';
+			toggle.setAttribute('aria-pressed', String(on));
+			toggle.setAttribute('aria-label', label);
+			toggle.title = label;
+			window.dispatchEvent(new CustomEvent('yh:music', { detail: { playing: on } }));
+		};
+
+		const play = (fadeMs = 900) => {
+			if (playing) return;
+			setState(true);
+			if (audio.paused) audio.volume = 0;
+			audio.play().then(
+				() => playing && fadeTo(MAX_VOL, fadeMs),
+				() => setState(false),
+			);
+		};
+
+		const pause = (fadeMs = 450) => {
+			if (!playing) return;
+			setState(false);
+			fadeTo(0, fadeMs, () => {
+				if (!playing) audio.pause();
+			});
+		};
+
+		w.__yhMusic = {
+			play,
+			pause,
+			toggle: () => (playing ? pause() : play()),
+			get playing() {
+				return playing;
+			},
+		};
+
+		// on touch there is no hover: show the title + progress for a moment
+		let peekTimer = 0;
+		const peek = () => {
+			root.classList.add('is-peek');
+			clearTimeout(peekTimer);
+			peekTimer = window.setTimeout(() => root.classList.remove('is-peek'), 2800);
+		};
+
+		toggle.addEventListener('pointerup', (e) => {
+			if (e.pointerType === 'touch') peek();
+		});
+		toggle.addEventListener('click', () => (playing ? pause() : play()));
+
+		// ── progress
+		const paint = () => {
+			const d = audio.duration;
+			const p = d ? (audio.currentTime / d) * 100 : 0;
+			fill.style.width = `${p}%`;
+			track.setAttribute('aria-valuenow', String(Math.round(p)));
 			cur.textContent = fmt(audio.currentTime);
-		});
-
+		};
+		audio.addEventListener('timeupdate', paint);
 		audio.addEventListener('loadedmetadata', () => {
 			dur.textContent = fmt(audio.duration);
 		});
-
 		audio.addEventListener('ended', () => {
-			player.classList.remove('is-playing');
-			player.classList.remove('is-paused');
-			player.classList.remove('is-expanded');
+			setState(false);
 			audio.currentTime = 0;
-			fill.style.width = '0%';
-			cur.textContent = '0:00';
-			state = 0;
+			paint();
 		});
 
-		// 重播按钮：从头开始播放 + 弹出卡片
-		const replayBtn = document.getElementById('m-replay');
-		replayBtn?.addEventListener('click', (e) => {
-			e.stopPropagation();
-			audio.currentTime = 0;
-			audio.play();
-			player.classList.add('is-playing');
-			player.classList.remove('is-paused');
-			player.classList.add('is-expanded');
-			state = 1;
-		});
-
-		prog.addEventListener('click', (e) => {
-			e.stopPropagation();
+		const seekTo = (ratio: number) => {
 			if (!audio.duration) return;
-			const rect = prog.getBoundingClientRect();
-			const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-			audio.currentTime = pct * audio.duration;
+			audio.currentTime = Math.max(0, Math.min(1, ratio)) * audio.duration;
+			paint();
+		};
+		track.addEventListener('click', (e) => {
+			const r = track.getBoundingClientRect();
+			seekTo((e.clientX - r.left) / r.width);
+			if (root.classList.contains('is-peek')) peek();
 		});
-	})();
+		track.addEventListener('keydown', (e) => {
+			if (!audio.duration) return;
+			const step = 5 / audio.duration;
+			const now = audio.currentTime / audio.duration;
+			if (e.key === 'ArrowRight' || e.key === 'ArrowUp') seekTo(now + step);
+			else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') seekTo(now - step);
+			else if (e.key === 'Home') seekTo(0);
+			else return;
+			e.preventDefault();
+		});
+	};
+
+	init();
 </script>
