@@ -1933,58 +1933,25 @@ html.dark .back-to-top-progress {
 	height: 1.05rem;
 }
 
-/* --- One-stroke signature brand mark (BrandMark.astro, pathLength = 1) --- */
+/* --- Brand mark: the intro's star, inked (BrandMark.astro) --- */
 .brand-mark {
 	display: inline-block;
 	height: 1em;
 	width: auto;
 	overflow: visible;
 	flex: none;
+	transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.brand-mark-path {
-	stroke-width: 7;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-	stroke-dasharray: 1;
-	stroke-dashoffset: 0;
-	animation: brand-draw 1400ms cubic-bezier(0.45, 0, 0.2, 1) 150ms both;
-}
-
-html.dark .brand-mark-path {
-	stroke: url(#brand-mark-gold-dark);
-}
-
-/* Hovering the mark (or its link) signs it again. A second keyframe name is
-   required so the animation actually restarts. */
-.brand-mark:hover .brand-mark-path,
-a:hover .brand-mark .brand-mark-path {
-	animation: brand-draw-again 900ms cubic-bezier(0.45, 0, 0.2, 1) both;
-}
-
-@keyframes brand-draw {
-	from {
-		stroke-dashoffset: 1;
-	}
-	to {
-		stroke-dashoffset: 0;
-	}
-}
-
-@keyframes brand-draw-again {
-	from {
-		stroke-dashoffset: 1;
-	}
-	to {
-		stroke-dashoffset: 0;
-	}
+a:hover .brand-mark,
+.brand-mark:hover {
+	transform: rotate(72deg) scale(1.08);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.brand-mark-path,
-	.brand-mark:hover .brand-mark-path,
-	a:hover .brand-mark .brand-mark-path {
-		animation: none;
+	a:hover .brand-mark,
+	.brand-mark:hover {
+		transform: none;
 	}
 }
 

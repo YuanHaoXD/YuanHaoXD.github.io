@@ -1,39 +1,22 @@
 ---
 /*
- * One-stroke signature "H" — the site's brand mark (YuanHao).
- * A single continuous path: left stem down, a hook that curls back up to the
- * middle, the crossbar sweeping right, up to the top of the right stem, down
- * again and out in a flourish. Drawn on with a stroke-dash animation at load
- * and redrawn on hover (pathLength="1", see the brand-draw keyframes).
+ * Brand mark — the star from the entrance animation, inked: sun-yellow fill,
+ * ink outline, a cream highlight. Turns one point on hover (see global.css).
  */
 interface Props {
 	class?: string;
 }
 const { class: className } = Astro.props as Props;
+
+const star = (cx: number, cy: number, R: number, r: number) =>
+	Array.from({ length: 10 }, (_, k) => {
+		const a = -Math.PI / 2 + (k * Math.PI) / 5;
+		const rad = k % 2 ? r : R;
+		return `${(cx + rad * Math.cos(a)).toFixed(2)},${(cy + rad * Math.sin(a)).toFixed(2)}`;
+	}).join(' ');
 ---
 
-<svg
-	class:list={['brand-mark', className]}
-	viewBox="0 0 120 100"
-	fill="none"
-	xmlns="http://www.w3.org/2000/svg"
-	aria-hidden="true"
->
-	<defs>
-		<linearGradient id="brand-mark-gold" x1="0" y1="0" x2="1" y2="1">
-			<stop offset="0" stop-color="#b47e24"></stop>
-			<stop offset="0.55" stop-color="#e2be6e"></stop>
-			<stop offset="1" stop-color="#966616"></stop>
-		</linearGradient>
-		<linearGradient id="brand-mark-gold-dark" x1="0" y1="0" x2="1" y2="1">
-			<stop offset="0" stop-color="#fad68c"></stop>
-			<stop offset="0.55" stop-color="#cda048"></stop>
-			<stop offset="1" stop-color="#ffe8b3"></stop>
-		</linearGradient>
-	</defs>
-	<path
-		class="brand-mark-path"
-		pathLength="1"
-		d="M 30 16 C 27 38, 25 62, 27 84 C 28 91, 35 90, 36 83 C 37 72, 35 60, 37 54 C 54 47, 74 46, 90 49 C 93 34, 92 22, 90 12 C 86 34, 84 60, 86 82 C 88 92, 102 92, 112 80"
-		stroke="url(#brand-mark-gold)"></path>
+<svg class:list={['brand-mark', className]} viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<polygon points={star(24, 26, 21, 9)} fill="#f4c64e" stroke="#231f20" stroke-width="3" stroke-linejoin="round"></polygon>
+	<polygon points={star(23, 25, 12, 5.2)} fill="none" stroke="#fff6d8" stroke-width="2" stroke-linejoin="round" opacity="0.9"></polygon>
 </svg>
