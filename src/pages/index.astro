@@ -167,7 +167,7 @@ const no = (name: string) => String(sections.indexOf(name) + 1).padStart(2, '0')
 	<body>
 		<Header />
 		<MobileDrawer />
-		<main class="page-shell page-fade-in py-10 md:py-14" transition:name="page-main" transition:animate="fade">
+		<main class="page-shell page-fade-in py-10 md:py-14">
 			<div class="ab mx-auto max-w-4xl">
 				<!-- ── profile ─────────────────────────────── -->
 				<header class="ab-profile section-enter">
@@ -176,7 +176,7 @@ const no = (name: string) => String(sections.indexOf(name) + 1).padStart(2, '0')
 					</div>
 					<div class="ab-profile__text">
 						<p class="ab-eyebrow">About · 关于</p>
-						<h1 class="ab-name" transition:name="page-title" transition:animate="fade">
+						<h1 class="ab-name">
 							<span class="font-sans">{ME}</span>
 						</h1>
 						<p class="ab-role">Undergraduate · B.Eng. in Artificial Intelligence</p>
@@ -240,8 +240,8 @@ const no = (name: string) => String(sections.indexOf(name) + 1).padStart(2, '0')
 										<img
 											src={`${BASE}${p.image}`}
 											alt={`First page of ${p.title.split(':')[0]}`}
-											width="720"
-											height="940"
+											width="480"
+											height="630"
 											loading="lazy"
 											decoding="async"
 										/>
@@ -527,6 +527,10 @@ const no = (name: string) => String(sections.indexOf(name) + 1).padStart(2, '0')
 				font-weight: 500;
 				font-size: 0.7em;
 				color: var(--slate);
+			}
+
+			:global(html.dark) .ab-h__no {
+				color: #b8bdd3;
 			}
 
 			.ab-bio p {

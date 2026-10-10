@@ -1,79 +1,48 @@
-# YuanHao's Space
+# Yuanhao Wang · Personal Site
 
-基于 Astro + Tailwind 的静态个人博客，用于记录技术笔记、研究心得和项目经验。
+[![Live](https://img.shields.io/badge/Visit-yuanhaoxd.github.io-686e87?style=for-the-badge)](https://yuanhaoxd.github.io/)
 
-[![Visit Live Site](https://img.shields.io/badge/Visit-Live%20Site-0f766e?style=for-the-badge&logo=github&logoColor=white)](https://yuanhaoxd.github.io/)
-[![View GitHub Repository](https://img.shields.io/badge/GitHub-Repository-111827?style=for-the-badge&logo=github&logoColor=white)](https://github.com/YuanHaoXD/YuanHaoXD.github.io)
+我的个人网站：学术主页 + 博客。Astro 静态站，部署在 GitHub Pages。
 
-## Features
+## 页面
 
-- 基于 Astro Content Collections 的静态博客（`.md` + `.mdx`）
-- 结构化页面：首页、博客、标签、友链、关于
-- 文章目录系统：桌面端 sticky 侧边栏 + 移动端抽屉
-- 中英文配对文章的语言切换支持
-- 亮/暗主题切换
-- GitHub Pages 自动部署（GitHub Actions）
-- 404 页面
+| 路径 | 内容 |
+|---|---|
+| `/` | 学术主页（简介、论文、经历、荣誉） |
+| `/home/` | 插画首页 |
+| `/blog/` | 博客（最新 / 精选 / 归档、标签、RSS） |
 
-## Project Structure
-
-```text
-.
-├─ public/
-│  ├─ image/                    # Static images
-│  └─ fonts/                    # Custom fonts
-├─ src/
-│  ├─ components/               # UI components
-│  ├─ content/
-│  │  └─ blog/                  # Markdown/MDX posts
-│  ├─ data/
-│  │  ├─ links.ts               # Friend links
-│  │  ├─ navLinks.ts            # Navigation items
-│  │  └─ quotes.json            # Terminal quotes
-│  ├─ layouts/
-│  │  └─ BlogPost.astro         # Article layout + TOC
-│  ├─ pages/
-│  │  ├─ index.astro            # Home
-│  │  ├─ blog/                  # Blog list + posts
-│  │  ├─ tags/                  # Tag pages
-│  │  ├─ links/                 # Friend links
-│  │  └─ about.astro            # About
-│  ├─ styles/
-│  │  └─ global.css             # Global styles
-│  └─ consts.ts                 # Site constants
-├─ astro.config.mjs
-├─ tailwind.config.mjs
-└─ package.json
-```
-
-## Development
+## 本地运行
 
 ```bash
 npm install
-npm run dev      # dev server at localhost:4321
-npm run build    # production build to dist/
-npm run preview  # preview build locally
+npm run dev      # http://localhost:4321
+npm run build    # 输出到 dist/
 ```
 
-## Writing
+## 写文章
 
-在 `src/content/blog/` 下创建 `.md` / `.mdx` 文件：
+在 `src/content/blog/` 新建 `.md` / `.mdx`：
 
 ```yaml
 ---
-title: "Your Title"
-description: "Short summary"
-pubDate: 2026-07-16
-tags: ["tag-a", "tag-b"]
+title: '标题'
+description: '一句话简介'
+pubDate: 2026-10-10
+tags: ['tag']
+lang: 'cn'      # cn / en
+draft: false    # true 时不会发布
 ---
 ```
 
-## Deployment
+## 部署
 
-推送到 `main` 分支后，GitHub Actions 自动构建并部署到 GitHub Pages。
+推送到 `main` 后，GitHub Actions 自动构建并发布（`.github/workflows/deploy.yml`）。
 
-站点地址：https://yuanhaoxd.github.io/
+## 技术
 
-## Credits
+Astro 5 · Tailwind CSS 4 · GSAP。改动记录见 [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)。
 
-本站基于 [DansBlog](https://github.com/Dancncn/DansBlog) 模板，由 [Dan Arnoux](https://github.com/Dancncn) 设计。
+## License
+
+MIT

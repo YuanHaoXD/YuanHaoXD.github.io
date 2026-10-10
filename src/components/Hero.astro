@@ -41,7 +41,7 @@ const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
 		</div>
 
 		<div class="yh-hero__copy" data-hero-copy>
-			<h1 class="yh-hero__title brand-wordmark" data-hero-title transition:name="page-title">
+			<h1 class="yh-hero__title brand-wordmark" data-hero-title>
 				<span data-hero-split>YuanHao</span>
 				<em data-hero-split>Blog</em>
 			</h1>
@@ -482,22 +482,17 @@ const MARQUEE = ['Think', 'Build', 'Record', '思考', '工程', '记录'];
 			gsap.set(split.chars, { yPercent: 115, rotate: 7 });
 			gsap.set(fades, { autoAlpha: 0, y: 16 });
 			gsap.set(badge, { autoAlpha: 0, scale: 0.6, rotate: -40 });
-			// A loader may hand its frame straight into this one (image already in
-			// place, so only type and ornaments animate). Otherwise run the full intro,
-			// started by the loader's reveal if one is playing.
+			// Run the full intro — started by the loader's reveal if one is playing.
 			const w = window as any;
-			const handoff = !!w.__yhSplashFrameHandoff;
 			const waitForSplash = w.__yhSplashActive && !w.__yhSplashRevealed;
-			const textAt = handoff ? 0 : 0.75;
+			const textAt = 0.75;
 
 			const intro = gsap.timeline({ paused: true, defaults: { ease: 'expo.out' } });
-			if (!handoff) {
-				gsap.set(frame, { clipPath: 'inset(9% 7% 9% 7% round 44px)' });
-				gsap.set(img, { scale: 1.32 });
-				intro
-					.to(frame, { clipPath: 'inset(0% 0% 0% 0% round 28px)', duration: 1.6, ease: 'expo.inOut' }, 0)
-					.to(img, { scale: 1, duration: 2.2 }, 0);
-			}
+			gsap.set(frame, { clipPath: 'inset(9% 7% 9% 7% round 44px)' });
+			gsap.set(img, { scale: 1.32 });
+			intro
+				.to(frame, { clipPath: 'inset(0% 0% 0% 0% round 28px)', duration: 1.6, ease: 'expo.inOut' }, 0)
+				.to(img, { scale: 1, duration: 2.2 }, 0);
 			intro
 				.to(split.chars, {
 					yPercent: 0,

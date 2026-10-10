@@ -1,11 +1,11 @@
 ---
 import { type CollectionEntry, getCollection, render } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
-import { getPostAnalyticsKey } from '../../utils/postAnalytics';
+import { getPostLang } from '../../utils/postAnalytics';
 import { getRelatedPosts } from '../../utils/posts';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+	const posts = await getCollection('blog', ({ data }) => !data.draft);
 	return posts.map((post) => ({
 		params: { slug: post.id },
 		props: post,
@@ -17,11 +17,10 @@ const post = Astro.props;
 const { Content, headings } = await render(post);
 
 const BASE = import.meta.env.BASE_URL;
-const allPosts = await getCollection('blog');
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 const postMeta = post.data as CollectionEntry<'blog'>['data'] & { lang?: string; group?: string };
-const analyticsKey = getPostAnalyticsKey(post);
 const idMatch = post.id.match(/-(cn|en)$/);
-const currentLang = (postMeta.lang === 'cn' || postMeta.lang === 'en' ? postMeta.lang : idMatch?.[1]) as
+const currentLang = (postMeta.lang === 'cn' || postMeta.lang === 'en' ? postMeta.lang : idMatch?.[1] ?? getPostLang(post)) as
 	| 'cn'
 	| 'en'
 	| undefined;
@@ -52,6 +51,6 @@ const languageSwitch =
 const relatedPosts = getRelatedPosts(post, allPosts, 4);
 ---
 
-<BlogPost {...post.data} headings={headings} rawBody={post.body} slug={post.id} analyticsKey={analyticsKey} languageSwitch={languageSwitch} relatedPosts={relatedPosts} relatedPostsLang={currentLang}>
+<BlogPost {...post.data} headings={headings} rawBody={post.body} slug={post.id} languageSwitch={languageSwitch} relatedPosts={relatedPosts} relatedPostsLang={currentLang}>
 	<Content />
 </BlogPost>

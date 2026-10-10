@@ -16,6 +16,27 @@ const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 <div class="mp" data-mp transition:persist="music-player">
 	<audio data-mp-audio preload="metadata" src={SRC}></audio>
 
+	<span class="mp__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+
+	<button class="mp__disc" type="button" data-mp-toggle aria-pressed="false" aria-label="播放音乐" title="播放音乐">
+		<svg viewBox="0 0 48 48" aria-hidden="true">
+			<g class="mp__spin">
+				<circle cx="24" cy="24" r="21" fill="#2b2726"></circle>
+				<circle cx="24" cy="24" r="17" fill="none" stroke="#4f4943" stroke-width="1"></circle>
+				<circle cx="24" cy="24" r="14" fill="none" stroke="#4f4943" stroke-width="1"></circle>
+				<!-- the sheen and the label notch make the spin readable -->
+				<path d="M10 17 A15.5 15.5 0 0 1 17 10" fill="none" stroke="#f1ece3" stroke-width="1.6" stroke-linecap="round" opacity="0.55"></path>
+				<circle cx="24" cy="24" r="10" fill="#f4c64e" stroke="#231f20" stroke-width="1.5"></circle>
+				<circle cx="24" cy="16.6" r="1.3" fill="#231f20"></circle>
+			</g>
+			<g class="mp__glyph" fill="#231f20">
+				<path class="mp__play" d="M21.4 19.6 L29 24 L21.4 28.4 Z"></path>
+				<path class="mp__pause" d="M20.2 19.8 h2.8 v8.4 h-2.8 Z M25 19.8 h2.8 v8.4 H25 Z"></path>
+			</g>
+		</svg>
+	</button>
+
+	<!-- after the record in the DOM (so Tab goes record → progress), shown to its left via `order` -->
 	<div class="mp__panel" data-mp-panel>
 		<div class="mp__meta">
 			<span class="mp__title">Summer</span>
@@ -38,26 +59,6 @@ const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 			<span data-mp-dur>2:34</span>
 		</div>
 	</div>
-
-	<span class="mp__eq" aria-hidden="true"><i></i><i></i><i></i></span>
-
-	<button class="mp__disc" type="button" data-mp-toggle aria-pressed="false" aria-label="播放音乐" title="播放音乐">
-		<svg viewBox="0 0 48 48" aria-hidden="true">
-			<g class="mp__spin">
-				<circle cx="24" cy="24" r="21" fill="#2b2726"></circle>
-				<circle cx="24" cy="24" r="17" fill="none" stroke="#4f4943" stroke-width="1"></circle>
-				<circle cx="24" cy="24" r="14" fill="none" stroke="#4f4943" stroke-width="1"></circle>
-				<!-- the sheen and the label notch make the spin readable -->
-				<path d="M10 17 A15.5 15.5 0 0 1 17 10" fill="none" stroke="#f1ece3" stroke-width="1.6" stroke-linecap="round" opacity="0.55"></path>
-				<circle cx="24" cy="24" r="10" fill="#f4c64e" stroke="#231f20" stroke-width="1.5"></circle>
-				<circle cx="24" cy="16.6" r="1.3" fill="#231f20"></circle>
-			</g>
-			<g class="mp__glyph" fill="#231f20">
-				<path class="mp__play" d="M21.4 19.6 L29 24 L21.4 28.4 Z"></path>
-				<path class="mp__pause" d="M20.2 19.8 h2.8 v8.4 h-2.8 Z M25 19.8 h2.8 v8.4 H25 Z"></path>
-			</g>
-		</svg>
-	</button>
 </div>
 
 <style is:global>
@@ -193,7 +194,12 @@ const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 	}
 
 	/* ── the panel: title + progress, beside the record ── */
+	.mp__eq {
+		order: -1;
+	}
+
 	.mp__panel {
+		order: -2;
 		display: grid;
 		gap: 0.3rem;
 		width: 10.5rem;

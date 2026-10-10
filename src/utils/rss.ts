@@ -10,6 +10,8 @@ interface RssFeedOptions {
 	description: string;
 	feedUrl: string;
 	site?: string;
+	// <language> of the channel; omitted for the mixed all-posts feed
+	language?: string;
 }
 
 export function getPostLang(post: CollectionEntry<'blog'>): string {
@@ -19,7 +21,7 @@ export function getPostLang(post: CollectionEntry<'blog'>): string {
 /**
  * Generate RSS feed
  */
-export async function generateRssFeed({ posts, title, description, feedUrl, site }: RssFeedOptions) {
+export async function generateRssFeed({ posts, title, description, feedUrl, site, language }: RssFeedOptions) {
 	const BASE_URL = import.meta.env.BASE_URL || '/';
 	const items = await Promise.all(
 		posts.map(async (post) => {
@@ -45,7 +47,7 @@ export async function generateRssFeed({ posts, title, description, feedUrl, site
 		description,
 		site: site ?? BASE_URL,
 		items,
-		customData: `<language>en-us</language>`,
+		...(language && { customData: `<language>${language}</language>` }),
 	});
 }
 

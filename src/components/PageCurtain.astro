@@ -182,7 +182,6 @@ const COLS = 6;
 		[/^\/blog\/.+/, { title: 'Reading' }],
 		[/^\/tags\/$/, { title: 'Tags' }],
 		[/^\/tags\/.+/, { title: 'Tagged' }],
-		[/^\/links\//, { title: 'Links' }],
 	];
 
 	const destFor = (url: URL): Dest => {
@@ -305,7 +304,8 @@ const COLS = 6;
 	};
 
 	document.addEventListener('astro:before-preparation', (event: any) => {
-		if (reduced()) return;
+		// browser back/forward should feel instant — no curtain
+		if (reduced() || event.navigationType === 'traverse') return;
 		const originalLoader = event.loader;
 		const to: URL = event.to;
 		event.loader = async () => {

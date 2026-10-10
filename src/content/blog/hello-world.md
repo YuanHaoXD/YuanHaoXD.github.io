@@ -3,6 +3,7 @@ title: 'Hello World — 网站上线'
 description: '第一篇文章，记录这个个人网站的诞生。'
 pubDate: 2026-06-29
 tags: ['announcement', 'personal', 'CN']
+lang: 'cn'
 draft: false
 ---
 

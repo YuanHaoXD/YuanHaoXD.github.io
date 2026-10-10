@@ -10,7 +10,7 @@ import { SITE_TITLE } from '../../consts';
 import { getTagSlug, normalizeTagLabel } from '../../utils/tags';
 
 const BASE = import.meta.env.BASE_URL;
-const posts = await getCollection('blog');
+const posts = await getCollection('blog', ({ data }) => !data.draft);
 
 const tagCount = new Map<string, { label: string; count: number }>();
 for (const post of posts) {
@@ -47,13 +47,13 @@ const totalTagged = counts.reduce((sum, c) => sum + c, 0);
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Browse All Tags | ${SITE_TITLE} - Find Articles by Topic`} description="Browse all topics covered in this blog. Find articles by tags including programming, Cloudflare, SEO, and technical guides." />
+		<BaseHead title={`Tags | ${SITE_TITLE}`} description="All topics on Yuanhao Wang's blog." />
 	</head>
 	<body>
 		<MeteorShower density={0.5} heightVh={42} />
 		<Header />
 		<MobileDrawer />
-		<main class="mx-auto max-w-3xl px-4 py-12" transition:name="page-main" transition:animate="fade">
+		<main class="mx-auto max-w-3xl px-4 py-12">
 			<PageHeading
 				eyebrow="Explore"
 				title="Browse"

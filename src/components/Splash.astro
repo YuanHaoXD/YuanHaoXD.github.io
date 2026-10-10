@@ -18,10 +18,11 @@
  *      fill the screen, then the light settles away onto the site
  *      (`yh:splash-reveal` starts the hero intro)
  *
- * The full story plays on every hard load of the home page (and the first
- * hard load of any page in a session); other repeat hard loads get a ~1.5s
- * quick cut (line → hole). Click or the skip button fast-forwards; the
- * "带声音进入" button (bottom-left) is the only way music starts with the intro. Gate: `html.is-splashing`, set in BaseHead.
+ * The full story plays once per browser session (on the first hard load of
+ * any page); later hard loads in the session get a ~1.5s quick cut
+ * (line → hole). Click or the skip button fast-forwards; the "带声音进入"
+ * button (bottom-left) is the only way music starts with the intro.
+ * Gate: `html.is-splashing`, set in BaseHead.
  */
 const INK = '#231f20';
 const SLATE = '#686e87';
@@ -79,13 +80,14 @@ const cracks = [
 const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 + ((i * 7) % 9) }));
 ---
 
-<div class="ld" data-splash aria-hidden="true">
+<!-- only the artwork is aria-hidden; the sound & skip buttons stay reachable -->
+<div class="ld" data-splash>
 	<!-- 1 · slate stage with the boiling line -->
-	<div class="ld__slate"></div>
-	<svg class="ld__line"><path data-ld-line-path></path></svg>
+	<div class="ld__slate" aria-hidden="true"></div>
+	<svg class="ld__line" aria-hidden="true"><path data-ld-line-path></path></svg>
 
 	<!-- 2 · paper flood + illustrated scene -->
-	<div class="ld__paper" data-ld-paper>
+	<div class="ld__paper" data-ld-paper aria-hidden="true">
 		<div class="ld__stage" data-ld-stage>
 			<svg class="ld__scene" viewBox="0 30 760 542" data-ld-scene>
 				<defs>
@@ -221,7 +223,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		</div>
 	</div>
 
-	<header class="ld__bar" data-ld-bar>
+	<header class="ld__bar" data-ld-bar aria-hidden="true">
 		<span>YuanHao®</span>
 		<span class="ld__hide-sm">A small archive · 2026</span>
 		<span>Loading <b data-ld-pct>000</b>%</span>
@@ -236,7 +238,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		<svg viewBox="0 0 24 24"><path d="M5 5 L13 12 L5 19 Z M12 5 L20 12 L12 19 Z" fill="currentColor"></path></svg>
 	</button>
 
-	<div class="ld__grain"></div>
+	<div class="ld__grain" aria-hidden="true"></div>
 </div>
 
 <style is:global>
@@ -550,10 +552,11 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		const w = window as any;
 		w.__yhSplashActive = true;
 
-		const isHome = location.pathname === import.meta.env.BASE_URL || location.pathname === `${import.meta.env.BASE_URL}index.html`;
+		// the landing page is the academic About page — visitors shouldn't sit
+		// through the whole story on every refresh, so it plays once a session
 		let repeat = false;
 		try {
-			repeat = !isHome && sessionStorage.getItem(SESSION_KEY) === '1';
+			repeat = sessionStorage.getItem(SESSION_KEY) === '1';
 		} catch {}
 
 		let done = false;

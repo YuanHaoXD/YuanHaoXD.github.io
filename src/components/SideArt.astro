@@ -55,9 +55,10 @@ const sunRays = Array.from({ length: 12 }, (_, i) => {
 const sparkle = (x: number, y: number, s = 7) => `M${x} ${y - s} v${s * 2} M${x - s} ${y} h${s * 2}`;
 ---
 
-<div class="side-art" aria-hidden="true" transition:persist="side-art" data-side-art>
+<!-- not aria-hidden as a whole: the sun & moon inside are real buttons -->
+<div class="side-art" transition:persist="side-art" data-side-art>
 	<!-- ───────────── left wing ───────────── -->
-	<svg class="side-art__svg side-art__svg--left" viewBox="0 0 240 900" preserveAspectRatio="xMidYMax meet">
+	<svg class="side-art__svg side-art__svg--left" viewBox="0 0 240 900" preserveAspectRatio="xMidYMax meet" role="presentation">
 		<defs>
 			<pattern id="sa-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
 				<line x1="0" y1="0" x2="0" y2="6" stroke="#231f20" stroke-width="1" opacity="0.4"></line>
@@ -115,7 +116,7 @@ const sparkle = (x: number, y: number, s = 7) => `M${x} ${y - s} v${s * 2} M${x 
 	</svg>
 
 	<!-- ───────────── right wing ───────────── -->
-	<svg class="side-art__svg side-art__svg--right" viewBox="0 0 240 900" preserveAspectRatio="xMidYMax meet">
+	<svg class="side-art__svg side-art__svg--right" viewBox="0 0 240 900" preserveAspectRatio="xMidYMax meet" role="presentation">
 		<!-- A · small cloud + sparkle -->
 		<g data-sa-layer="1">
 			<g data-sa-float="-8" data-sa-item="R-cloud-a">
@@ -169,8 +170,8 @@ const sparkle = (x: number, y: number, s = 7) => `M${x} ${y - s} v${s * 2} M${x 
 		<line x1="8" y1="882" x2="220" y2="882" stroke={INK} stroke-width="3"></line>
 	</svg>
 
-	<p class="side-art__caption side-art__caption--left">Think · Build · Record — 2026</p>
-	<p class="side-art__caption side-art__caption--right">YuanHao · A small archive</p>
+	<p class="side-art__caption side-art__caption--left" aria-hidden="true">Think · Build · Record — 2026</p>
+	<p class="side-art__caption side-art__caption--right" aria-hidden="true">YuanHao · A small archive</p>
 </div>
 
 <style is:global>
@@ -299,9 +300,28 @@ const sparkle = (x: number, y: number, s = 7) => `M${x} ${y - s} v${s * 2} M${x 
 		const root = document.querySelector<HTMLElement>('[data-side-art]');
 		if (!root || root.dataset.bound === 'true') return;
 		root.dataset.bound = 'true';
-		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const $$ = <T extends Element = SVGElement>(s: string) => [...root.querySelectorAll<T>(s)];
+
+		// sun → light, moon → dark (shared switch lives in Header.astro)
+		$$<SVGGElement>('[data-sa-toggle]').forEach((t) => {
+			const wantDark = t.dataset.saToggle === 'dark';
+			const fire = (x?: number, y?: number) => {
+				const r = t.getBoundingClientRect();
+				if (!reduced) gsap.fromTo(t, { scale: 0.86, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.45)', clearProps: 'transform' });
+				(window as any).__yhSetTheme?.(wantDark, x ?? r.left + r.width / 2, y ?? r.top + r.height / 2);
+			};
+			t.addEventListener('click', (e) => fire(e.clientX, e.clientY));
+			t.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					fire();
+				}
+			});
+		});
+
+		// everything below is motion only
+		if (reduced) return;
 
 		// idle life — horizontal floats only, so items never drift into the zone above/below
 		$$('[data-sa-float]').forEach((g, i) => {
@@ -318,23 +338,6 @@ const sparkle = (x: number, y: number, s = 7) => `M${x} ${y - s} v${s * 2} M${x 
 				{ scale: 1, opacity: 1, duration: 1.1 + (i % 3) * 0.4, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.3 },
 			),
 		);
-
-		// sun → light, moon → dark (shared switch lives in Header.astro)
-		$$<SVGGElement>('[data-sa-toggle]').forEach((t) => {
-			const wantDark = t.dataset.saToggle === 'dark';
-			const fire = (x?: number, y?: number) => {
-				const r = t.getBoundingClientRect();
-				gsap.fromTo(t, { scale: 0.86, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.45)', clearProps: 'transform' });
-				(window as any).__yhSetTheme?.(wantDark, x ?? r.left + r.width / 2, y ?? r.top + r.height / 2);
-			};
-			t.addEventListener('click', (e) => fire(e.clientX, e.clientY));
-			t.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault();
-					fire();
-				}
-			});
-		});
 
 		// scroll parallax: higher zones drift up more, so the gaps between zones only widen
 		const layers = $$('[data-sa-layer]').map((g) => ({ g, k: Number(g.getAttribute('data-sa-layer')) || 0 }));

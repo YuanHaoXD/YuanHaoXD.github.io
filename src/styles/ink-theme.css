@@ -26,7 +26,7 @@
 	--color-zinc-100: #e9e2d5;
 	--color-zinc-200: #d9d0c0;
 	--color-zinc-300: #c2b8a6;
-	--color-zinc-400: #8f877a;
+	--color-zinc-400: #716a5f; /* ≥ 4.5:1 on the paper (was #8f877a, 3:1) */
 	--color-zinc-500: #6b645b;
 	--color-zinc-600: #4f4943;
 	--color-zinc-700: #3a3532;
@@ -50,6 +50,9 @@ html.dark {
 	--card: #3a3f50;
 	--line: #101117;
 	--on-card: #f1ece3;
+	/* muted text on the dark paper: lift the mid greys to ≥ 4.5:1 (WCAG AA) */
+	--color-zinc-400: #bdb5a8;
+	--color-zinc-500: #a8a093;
 }
 
 /* ── Paper & grain ─────────────────────────────────────── */
@@ -223,27 +226,8 @@ html.dark .markdown-prose a {
 }
 
 /* ── Decorations from the old theme ────────────────────── */
-/* marble columns & meteors read as a different world — retire them */
-.parthenon-grp,
-.meteor-layer {
-	display: none !important;
-}
-
-/* gold dot ribbon → inked hatch band */
-.dots-band {
-	height: 22px !important;
-	border-block: 2px solid var(--line);
-	background:
-		repeating-linear-gradient(45deg, var(--line) 0 2px, transparent 2px 9px),
-		var(--pink);
-	border-radius: 0 !important;
-	-webkit-mask-image: none !important;
-	mask-image: none !important;
-}
-
-.dots-band canvas {
-	display: none !important;
-}
+/* the meteors and the dot ribbon stay, recoloured to the ink palette in their
+   own scripts (the marble columns were removed) */
 
 /* ── Footer ────────────────────────────────────────────── */
 /* the rule spans only the content column, so it never runs through the side art */

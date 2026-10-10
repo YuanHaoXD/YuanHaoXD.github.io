@@ -25,11 +25,15 @@ interface Props {
 	description: string;
 	// Optional social preview image; falls back to the branded OG card.
 	image?: ImageMetadata | string;
+	// Keep the page out of search results (404 etc.): no canonical, robots noindex.
+	noindex?: boolean;
+	// Open Graph type: 'article' for blog posts, 'website' otherwise.
+	ogType?: 'website' | 'article';
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { title, description, image } = Astro.props;
+const { title, description, image, noindex = false, ogType = 'website' } = Astro.props;
 const BASE = import.meta.env.BASE_URL;
 // Branded share card (1200x630) is the default for Discord/Twitter/OG previews.
 const usesDefaultOgImage = !image;
@@ -70,26 +74,8 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 />
 <meta name="generator" content={Astro.generator} />
 
-<style is:inline>
-	{`
-		@font-face {
-			font-family: "Alibaba PuHuiTi";
-			src: url('${BASE}fonts/AlibabaPuHuiTi-3-55-RegularL3.woff2') format('woff2');
-			font-weight: 400;
-			font-style: normal;
-			font-display: swap;
-		}
-		@font-face {
-			font-family: "Alibaba PuHuiTi";
-			src: url('${BASE}fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2') format('woff2');
-			font-weight: 600;
-			font-style: normal;
-			font-display: swap;
-		}
-	`}
-</style>
 <!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} />
+{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonicalURL} />}
 
 <!-- Primary Meta Tags -->
 <title>{title}</title>
@@ -98,7 +84,7 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 
 
 <!-- Open Graph / Facebook / Discord -->
-<meta property="og:type" content="website" />
+<meta property="og:type" content={ogType} />
 <meta property="og:site_name" content={SITE_TITLE} />
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />
@@ -116,7 +102,7 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 <meta property="twitter:image" content={ogImageURL} />
 
 <!-- Browser chrome tinting; kept in sync with the user-chosen theme by script. -->
-<meta name="theme-color" content="#fafafa" />
+<meta name="theme-color" content="#f1ece3" />
 
 <script is:inline>
 	(() => {
@@ -133,12 +119,12 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 		// the OS preference), so it is synced here and on every toggle.
 		window.__syncThemeColor = (isDark) => {
 			const meta = document.querySelector('meta[name="theme-color"]');
-			if (meta) meta.setAttribute('content', isDark ? '#09090b' : '#fafafa');
+			if (meta) meta.setAttribute('content', isDark ? '#2b2e3b' : '#f1ece3'); // ink paper
 		};
 		window.__syncThemeColor(theme === 'dark');
 
-		// Every hard load opens with the loader (see Splash.astro); in-site
-		// navigation uses the page curtain instead.
+		// Hard loads open with the loader (full story once a session, then a
+		// quick cut — see Splash.astro); in-site navigation uses the curtain.
 		if (!window.__yhBooted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 			root.classList.add('is-splashing');
 		}
@@ -461,27 +447,6 @@ const cfWebAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 			}
 			document.addEventListener('astro:page-load', scanReveals);
 			document.addEventListener('astro:after-swap', scanReveals);
-		}
-
-		// Directional page transitions: slide left/right based on nav order.
-		// The data attribute is consumed by ::view-transition CSS in global.css.
-		{
-			const NAV_ORDER = { '': 0, blog: 1, tags: 2, links: 3, about: 4 };
-			const segmentFor = (url) => {
-				const parts = url.pathname.split('/').filter(Boolean).filter((p) => p !== 'personal-blog');
-				return parts[0] || '';
-			};
-
-			document.addEventListener('astro:before-preparation', (event) => {
-				const root = document.documentElement;
-				delete root.dataset.navDir;
-				try {
-					const fromIdx = NAV_ORDER[segmentFor(event.from)];
-					const toIdx = NAV_ORDER[segmentFor(event.to)];
-					if (fromIdx === undefined || toIdx === undefined || fromIdx === toIdx) return;
-					root.dataset.navDir = toIdx > fromIdx ? 'forward' : 'back';
-				} catch {}
-			});
 		}
 
 		if (window.matchMedia('(pointer: fine)').matches) {

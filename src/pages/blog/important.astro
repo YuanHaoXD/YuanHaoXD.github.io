@@ -13,7 +13,7 @@ import { SITE_TITLE } from '../../consts';
 const BASE = import.meta.env.BASE_URL;
 
 // Get all posts
-const allPosts = await getCollection('blog');
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 
 // Filter important posts (where important === true), sorted by importantOrder
 const importantPosts = allPosts
@@ -29,13 +29,13 @@ const currentView = 'important';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Important Articles | ${SITE_TITLE} - Curated Technical Guides`} description="A curated selection of the most valuable articles on this blog. Find essential tutorials, guides, and technical notes worth reading." />
+		<BaseHead title={`Featured | ${SITE_TITLE}`} description="Featured posts by Yuanhao Wang — the notes most worth reading first." />
 	</head>
 	<body>
 		<MeteorShower density={0.4} heightVh={40} />
 		<Header />
 		<MobileDrawer />
-		<main class="page-shell page-fade-in py-10 md:py-14" transition:name="page-main" transition:animate="fade">
+		<main class="page-shell page-fade-in py-10 md:py-14">
 			<section class="mx-auto max-w-4xl">
 				<PageHeading eyebrow="Writing" title="Blog" subtitle="Featured articles and essential reads.">
 					<!-- Segmented Control with 3 options -->

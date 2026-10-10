@@ -11,7 +11,7 @@ import { SITE_TITLE } from '../../consts';
 const BASE = import.meta.env.BASE_URL;
 
 // Get all posts
-const allPosts = await getCollection('blog');
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 // Group posts by year and month for archive view
@@ -54,13 +54,13 @@ const currentView = 'archive';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Blog Archive | ${SITE_TITLE} - All Posts by Year & Month`} description="Browse all blog posts organized by year and month. Explore the complete archive of articles, tutorials, and technical notes." />
+		<BaseHead title={`Archive | ${SITE_TITLE}`} description="Every post by Yuanhao Wang, by year and month — research notes, engineering logs and essays." />
 	</head>
 	<body>
 		<MeteorShower density={0.4} heightVh={40} />
 		<Header />
 		<MobileDrawer />
-		<main class="page-shell page-fade-in py-10 md:py-14" transition:name="page-main" transition:animate="fade">
+		<main class="page-shell page-fade-in py-10 md:py-14">
 			<section class="mx-auto max-w-4xl">
 				<PageHeading eyebrow="Writing" title="Blog" subtitle="Browse all posts organized by year and month.">
 					<!-- Segmented Control with 3 options -->

@@ -119,8 +119,9 @@ const { density = 1, heightVh = 58 } = Astro.props as Props;
 				}
 
 				const dark = document.documentElement.classList.contains('dark');
-				const goldRgb = dark ? '226, 190, 110' : '170, 118, 32';
-				const blueRgb = dark ? '147, 197, 253' : '59, 130, 246';
+				// ink palette: slate + dusty pink on paper, cream + sun at night
+				const goldRgb = dark ? '241, 236, 227' : '104, 110, 135';
+				const blueRgb = dark ? '244, 198, 78' : '201, 120, 104';
 
 				ctx.clearRect(0, 0, width, height);
 
