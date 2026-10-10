@@ -1977,21 +1977,29 @@ html.dark .brand-apostrophe {
 	color: transparent;
 }
 
-/* --- Pop-art dot band under the hero row ---
-   Canvas-driven drifting halftone dots; edges fade out so it reads as a quiet
-   decorative ribbon instead of competing with the title or terminal card. */
-.dots-band {
-	position: relative;
-	width: 100%;
-	height: 72px;
-	-webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
-	mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+/* --- Inked ribbon under the hero row ---
+   Dusty-pink band between two ink rules; the hatching drifts sideways like a
+   scrolling banner. Background-position only, so it costs next to nothing. */
+.ink-ribbon {
+	height: 22px;
+	border-block: 2px solid var(--line, #231f20);
+	background:
+		repeating-linear-gradient(45deg, var(--line, #231f20) 0 2px, transparent 2px 9px),
+		var(--pink, #e9a99a);
+	background-size: 12.73px 12.73px, auto;
+	animation: ink-ribbon-scroll 1.6s linear infinite;
 }
 
-.dots-band canvas {
-	display: block;
-	width: 100%;
-	height: 100%;
+@keyframes ink-ribbon-scroll {
+	to {
+		background-position: 12.73px 0, 0 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ink-ribbon {
+		animation: none;
+	}
 }
 
 /* --- Reduced motion: neutralize every polish-layer effect --- */
