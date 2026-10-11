@@ -2,8 +2,11 @@
 /*
  * Music player — an ink-line record in the bottom-right corner.
  *
- * - Never starts on its own: music plays only after a click here, or on the
- *   intro's "带声音进入" button (Splash.astro calls window.__yhMusic).
+ * - Starts by itself when the intro ends. Browsers only allow sound after the
+ *   visitor has interacted with the page, so if that first attempt is
+ *   blocked it starts on the visitor's first click / key / tap anywhere.
+ *   Pausing it turns this off for the rest of the visit (sessionStorage).
+ *   The intro's "点击开启声音" button starts it immediately.
  * - One click = one action: play ⇄ pause, with a short volume fade each way.
  * - Mounted once in Header with `transition:persist`, so the record keeps
  *   spinning (and the song keeps going) across page swaps.
@@ -376,13 +379,35 @@ const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 			window.dispatchEvent(new CustomEvent('yh:music', { detail: { playing: on } }));
 		};
 
-		const play = (fadeMs = 900) => {
-			if (playing) return;
+		// the visitor's own choice for this visit: paused → no more auto-start
+		const OFF_KEY = 'yh-music-off';
+		const remember = (off: boolean) => {
+			try {
+				if (off) sessionStorage.setItem(OFF_KEY, '1');
+				else sessionStorage.removeItem(OFF_KEY);
+			} catch {}
+		};
+		const turnedOff = () => {
+			try {
+				return sessionStorage.getItem(OFF_KEY) === '1';
+			} catch {
+				return false;
+			}
+		};
+
+		const play = (fadeMs = 900): Promise<boolean> => {
+			if (playing) return Promise.resolve(true);
 			setState(true);
 			if (audio.paused) audio.volume = 0;
-			audio.play().then(
-				() => playing && fadeTo(MAX_VOL, fadeMs),
-				() => setState(false),
+			return audio.play().then(
+				() => {
+					if (playing) fadeTo(MAX_VOL, fadeMs);
+					return true;
+				},
+				() => {
+					setState(false);
+					return false;
+				},
 			);
 		};
 
@@ -394,10 +419,19 @@ const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 			});
 		};
 
+		const userPlay = (fadeMs?: number) => {
+			remember(false);
+			return play(fadeMs);
+		};
+		const userPause = (fadeMs?: number) => {
+			remember(true);
+			pause(fadeMs);
+		};
+
 		w.__yhMusic = {
-			play,
-			pause,
-			toggle: () => (playing ? pause() : play()),
+			play: userPlay,
+			pause: userPause,
+			toggle: () => (playing ? userPause() : userPlay()),
 			get playing() {
 				return playing;
 			},
@@ -414,7 +448,28 @@ const SRC = `${import.meta.env.BASE_URL}audio/summer.mp3`;
 		toggle.addEventListener('pointerup', (e) => {
 			if (e.pointerType === 'touch') peek();
 		});
-		toggle.addEventListener('click', () => (playing ? pause() : play()));
+		toggle.addEventListener('click', () => (playing ? userPause() : userPlay()));
+
+		// ── auto-start: try when the intro ends; if the browser blocks sound
+		//    (no interaction yet), start on the first click / key / tap
+		const GESTURES = ['pointerdown', 'keydown', 'touchend'] as const;
+		const onGesture = (e: Event) => {
+			disarm();
+			// a click on the player itself is handled by its own button
+			if (root.contains(e.target as Node)) return;
+			if (!playing && !turnedOff()) play(1600);
+		};
+		const arm = () => GESTURES.forEach((t) => document.addEventListener(t, onGesture, { capture: true }));
+		const disarm = () => GESTURES.forEach((t) => document.removeEventListener(t, onGesture, { capture: true }));
+		const autoStart = () => {
+			if (playing || turnedOff()) return;
+			play(1600).then((ok) => {
+				if (!ok) arm();
+			});
+		};
+		const splashing = document.documentElement.classList.contains('is-splashing') && !w.__yhSplashRevealed;
+		if (splashing) window.addEventListener('yh:splash-reveal', autoStart, { once: true });
+		else autoStart();
 
 		// ── progress
 		const paint = () => {

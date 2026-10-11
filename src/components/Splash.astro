@@ -20,8 +20,9 @@
  *
  * The full story plays once per browser session (on the first hard load of
  * any page); later hard loads in the session get a ~1.5s quick cut
- * (line → hole). Click or the skip button fast-forwards; the "带声音进入"
- * button (bottom-left) is the only way music starts with the intro.
+ * (line → hole). The story can't be skipped or sped up. The "点击开启声音"
+ * button (bottom-left) starts the music right away; otherwise the music
+ * player starts it once the intro ends (see MusicPlayer.astro).
  * Gate: `html.is-splashing`, set in BaseHead.
  */
 const INK = '#231f20';
@@ -80,7 +81,7 @@ const cracks = [
 const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 + ((i * 7) % 9) }));
 ---
 
-<!-- only the artwork is aria-hidden; the sound & skip buttons stay reachable -->
+<!-- only the artwork is aria-hidden; the sound button stays reachable -->
 <div class="ld" data-splash>
 	<!-- 1 · slate stage with the boiling line -->
 	<div class="ld__slate" aria-hidden="true"></div>
@@ -231,11 +232,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 
 	<button class="ld__sound" type="button" data-ld-sound aria-pressed="false">
 		<span class="ld__sound-eq" aria-hidden="true"><i></i><i></i><i></i></span>
-		<span data-ld-sound-label>带声音进入</span>
-	</button>
-
-	<button class="ld__skip" type="button" data-ld-skip aria-label="Skip intro">
-		<svg viewBox="0 0 24 24"><path d="M5 5 L13 12 L5 19 Z M12 5 L20 12 L12 19 Z" fill="currentColor"></path></svg>
+		<span data-ld-sound-label>点击开启声音</span>
 	</button>
 
 	<div class="ld__grain" aria-hidden="true"></div>
@@ -270,7 +267,6 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		z-index: 2147483000;
 		display: block;
 		overflow: hidden;
-		cursor: pointer;
 		/* The exit punches a growing hole through the whole loader. */
 		-webkit-mask-image: radial-gradient(circle at var(--ld-hx) var(--ld-hy), transparent var(--ld-r), #000 calc(var(--ld-r) + var(--ld-feather, 1px)));
 		mask-image: radial-gradient(circle at var(--ld-hx) var(--ld-hy), transparent var(--ld-r), #000 calc(var(--ld-r) + var(--ld-feather, 1px)));
@@ -411,34 +407,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 		font-variant-numeric: tabular-nums;
 	}
 
-	.ld__skip {
-		position: absolute;
-		right: clamp(16px, 3vw, 40px);
-		bottom: clamp(16px, 3vh, 32px);
-		display: grid;
-		place-items: center;
-		width: 42px;
-		height: 42px;
-		padding: 0;
-		border-radius: 50%;
-		border: 1.5px solid currentColor;
-		background: transparent;
-		color: var(--ld-paper);
-		cursor: pointer;
-		transition: transform 0.3s;
-	}
-
-	.ld__skip:hover {
-		transform: scale(1.08);
-	}
-
-	.ld__skip svg {
-		width: 16px;
-		height: 16px;
-	}
-
-	/* opt-in sound, mirrored opposite the skip button — music only ever
-	   starts from a click */
+	/* sound button, bottom-left: starts the music right away */
 	.ld__sound {
 		position: absolute;
 		left: clamp(16px, 3vw, 40px);
@@ -602,7 +571,6 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 
 		const pct = $('[data-ld-pct]');
 		const bar = $('[data-ld-bar]');
-		const skip = $('[data-ld-skip]');
 		const sound = $('[data-ld-sound]');
 		const soundLabel = $('[data-ld-sound-label]');
 		const paper = $('[data-ld-paper]');
@@ -690,21 +658,16 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 			.to(lineState, { len: maxLen() * 0.88, duration: loadDur, ease: 'power2.inOut' }, 0);
 
 		let master: gsap.core.Timeline | null = null;
-		const fastForward = () => master?.timeScale(4);
-		el.addEventListener('click', fastForward);
-		skip.addEventListener('click', (e) => {
-			e.stopPropagation();
-			fastForward();
-		});
 
 		// opt-in sound: the click is the user gesture that lets the music start;
 		// it fades in slowly, under the rest of the intro
 		const syncSound = (on: boolean) => {
 			sound.classList.toggle('is-on', on);
 			sound.setAttribute('aria-pressed', String(on));
-			soundLabel.textContent = on ? '声音已开启' : '带声音进入';
+			soundLabel.textContent = on ? '声音已开启' : '点击开启声音';
 		};
 		syncSound(!!w.__yhMusic?.playing);
+		window.addEventListener('yh:music', (e: any) => syncSound(!!e.detail?.playing));
 		sound.addEventListener('click', (e) => {
 			e.stopPropagation();
 			const music = w.__yhMusic;
@@ -751,7 +714,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 				.to(lineState, { len: maxLen(), duration: 0.35, ease: 'power2.out' }, 0)
 				.to(lineState, { len: 0, alpha: 0, duration: 0.45, ease: 'expo.in' }, 0.35)
 				.to(paper, { clipPath: 'circle(75% at 50% 50%)', duration: 1.1, ease: 'expo.inOut' }, 0.65)
-				.to([bar, skip, sound], { color: '#231f20', duration: 0.4 }, 0.95);
+				.to([bar, sound], { color: '#231f20', duration: 0.4 }, 0.95);
 
 			// ink the scene in
 			const build = 1.1;
@@ -891,7 +854,7 @@ const dust = Array.from({ length: 10 }, (_, i) => ({ side: i % 2 ? 1 : -1, r: 9 
 			tl.to(rays, { scale: 1.5, rotation: '+=40', duration: 0.6, ease: 'back.out(2.4)' }, exit)
 				.to(sparkles, { scale: 1.3, duration: 0.35, ease: 'back.out(3)' }, exit)
 				.to(dialog, { autoAlpha: 0, y: -10, duration: 0.35 }, exit)
-				.to([bar, skip, sound], { autoAlpha: 0, duration: 0.35 }, exit)
+				.to([bar, sound], { autoAlpha: 0, duration: 0.35 }, exit)
 				.add(bloom, exit + 0.35)
 				// push in on the star as its light grows
 				.to(stage, { scale: 3.2, duration: 1.3, ease: 'power2.in' }, exit + 0.4)
